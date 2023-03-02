@@ -1,23 +1,23 @@
-import { useState, useEffect, useRef } from "react";
-import Layout from "@/components/app/Layout";
-import BlurImage from "@/components/BlurImage";
-import Modal from "@/components/Modal";
-import LoadingDots from "@/components/app/loading-dots";
-import Link from "next/link";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/router";
-import useSWR from "swr";
-import { useDebounce } from "use-debounce";
-import { fetcher } from "@/lib/fetcher";
-import { HttpMethod } from "@/types";
+import { useState, useEffect, useRef } from 'react';
+import Layout from '@/components/app/Layout';
+import BlurImage from '@/components/BlurImage';
+import Modal from '@/components/Modal';
+import LoadingDots from '@/components/app/loading-dots';
+import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/router';
+import useSWR from 'swr';
+import { useDebounce } from 'use-debounce';
+import { fetcher } from '@/lib/fetcher';
+import { HttpMethod } from '@/types';
 
-import type { FormEvent } from "react";
-import type { Site } from "@prisma/client";
+import type { FormEvent } from 'react';
+import type { Site } from '@prisma/client';
 
 export default function AppIndex() {
   const [showModal, setShowModal] = useState<boolean>(false);
   const [creatingSite, setCreatingSite] = useState<boolean>(false);
-  const [subdomain, setSubdomain] = useState<string>("");
+  const [subdomain, setSubdomain] = useState<string>('');
   const [debouncedSubdomain] = useDebounce(subdomain, 1500);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,7 +29,7 @@ export default function AppIndex() {
     async function checkSubDomain() {
       if (debouncedSubdomain.length > 0) {
         const response = await fetch(
-          `/api/domain/check?domain=${debouncedSubdomain}&subdomain=1`
+          `/api/domain/check?domain=${debouncedSubdomain}&subdomain=1`,
         );
         const available = await response.json();
         if (available) {
@@ -49,14 +49,14 @@ export default function AppIndex() {
 
   const { data: sites } = useSWR<Array<Site>>(
     sessionId && `/api/site`,
-    fetcher
+    fetcher,
   );
 
   async function createSite() {
-    const res = await fetch("/api/site", {
+    const res = await fetch('/api/site', {
       method: HttpMethod.POST,
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         userId: sessionId,
@@ -67,7 +67,7 @@ export default function AppIndex() {
     });
 
     if (!res.ok) {
-      alert("Failed to create site");
+      alert('Failed to create site');
     }
 
     const data = await res.json();
@@ -147,11 +147,11 @@ export default function AppIndex() {
               disabled={creatingSite || error !== null}
               className={`${
                 creatingSite || error
-                  ? "cursor-not-allowed text-gray-400 bg-gray-50"
-                  : "bg-white text-gray-600 hover:text-black"
+                  ? 'cursor-not-allowed text-gray-400 bg-gray-50'
+                  : 'bg-white text-gray-600 hover:text-black'
               } w-full px-5 py-5 text-sm border-t border-l border-gray-300 rounded-br focus:outline-none focus:ring-0 transition-all ease-in-out duration-150`}
             >
-              {creatingSite ? <LoadingDots /> : "CREATE SITE"}
+              {creatingSite ? <LoadingDots /> : 'CREATE SITE'}
             </button>
           </div>
         </form>
@@ -159,7 +159,7 @@ export default function AppIndex() {
 
       <div className="py-20 max-w-screen-xl mx-auto px-10 sm:px-20">
         <div className="flex flex-col sm:flex-row space-y-5 sm:space-y-0 justify-between items-center">
-          <h1 className="font-cal text-5xl">My Sites</h1>
+          <h1 className="font-cal text-5xl">My Sitess</h1>
           <button
             onClick={() => setShowModal(true)}
             className="font-cal text-lg w-3/4 sm:w-40 tracking-wide text-white bg-black border-black border-2 px-5 py-3 hover:bg-white hover:text-black transition-all ease-in-out duration-150"
@@ -180,7 +180,7 @@ export default function AppIndex() {
                           width={500}
                           height={400}
                           className="h-full object-cover"
-                          alt={site.name ?? "Site thumbnail"}
+                          alt={site.name ?? 'Site thumbnail'}
                         />
                       ) : (
                         <div className="absolute flex items-center justify-center w-full h-full bg-gray-100 text-gray-500 text-4xl select-none">
