@@ -1,12 +1,10 @@
-import { ChakraProvider } from '@chakra-ui/react';
-import { Analytics } from '@vercel/analytics/react';
-import { SessionProvider } from 'next-auth/react';
-import type { Session } from 'next-auth';
-import { theme } from '@/lib/theme';
-import { cal, inter } from '@/styles/fonts';
-import cx from 'classnames';
-import '@/styles/globals.css';
 import type { AppProps } from 'next/app';
+import type { Session } from 'next-auth';
+import { Analytics } from '@vercel/analytics/react';
+import { ChakraProvider } from '@chakra-ui/react';
+import { SessionProvider } from 'next-auth/react';
+import { theme } from '@/lib/theme';
+import '@/styles/globals.css';
 
 export default function App({
   Component,
@@ -14,11 +12,9 @@ export default function App({
 }: AppProps<{ session: Session }>) {
   return (
     <SessionProvider session={session}>
-      <main className={cx(cal.variable, inter.variable)}>
-        <ChakraProvider theme={theme}>
-          <Component {...pageProps} />
-        </ChakraProvider>
-      </main>
+      <ChakraProvider theme={theme}>
+        <Component {...pageProps} />
+      </ChakraProvider>
       <Analytics />
     </SessionProvider>
   );
