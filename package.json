@@ -5,12 +5,12 @@
     "dev": "next dev",
     "format:write": "prettier --write \"**/*.{css,js,json,jsx,ts,tsx}\"",
     "format": "prettier \"**/*.{css,js,json,jsx,ts,tsx}\"",
-    "lint": "next lint",
+    "lint": "TIMING=1 eslint .",
     "prebuild": "prisma generate",
     "predev": "prisma generate",
     "prisma:migrate": "prisma migrate deploy",
     "start": "next start",
-    "type-check": "tsc"
+    "typecheck": "tsc --project tsconfig.json --noEmit"
   },
   "engines": {
     "node": ">=14.0.0"
