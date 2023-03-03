@@ -1,44 +1,46 @@
-import { cache } from "react";
-import type { _ProjectData } from "@/types";
-import prisma from "@/lib/prisma";
-import remarkMdx from "remark-mdx";
-import { remark } from "remark";
-import { serialize } from "next-mdx-remote/serialize";
-import { replaceExamples, replaceTweets } from "@/lib/remark-plugins";
+import { cache } from 'react';
+import type { _ProjectData } from '@/types';
+import prisma from '@/lib/prisma';
+// import remarkMdx from 'remark-mdx';
+// import { remark } from 'remark';
+import { serialize } from 'next-mdx-remote/serialize';
+import { replaceExamples, replaceTweets } from '@/lib/remark-plugins';
 
-export const getProjectData = cache(async (project: string): Promise<_ProjectData> => {
-  let filter: {
-    subdomain?: string;
-    customDomain?: string;
-  } = {
-    subdomain: project,
-  };
-
-  if (project.includes(".")) {
-    filter = {
-      customDomain: project,
+export const getProjectData = cache(
+  async (project: string): Promise<_ProjectData> => {
+    let filter: {
+      subdomain?: string;
+      customDomain?: string;
+    } = {
+      subdomain: project,
     };
-  }
 
-  const data = (await prisma.project.findUnique({
-    where: filter,
-    include: {
-      user: true,
-      posts: {
-        where: {
-          published: true,
-        },
-        orderBy: [
-          {
-            createdAt: "desc",
+    if (project.includes('.')) {
+      filter = {
+        customDomain: project,
+      };
+    }
+
+    const data = (await prisma.project.findUnique({
+      where: filter,
+      include: {
+        user: true,
+        posts: {
+          where: {
+            published: true,
           },
-        ],
+          orderBy: [
+            {
+              createdAt: 'desc',
+            },
+          ],
+        },
       },
-    },
-  })) as _ProjectData;
+    })) as _ProjectData;
 
-  return data;
-});
+    return data;
+  },
+);
 
 export const getPostData = cache(async (project: string, slug: string) => {
   let filter: {
@@ -48,7 +50,7 @@ export const getPostData = cache(async (project: string, slug: string) => {
     subdomain: project,
   };
 
-  if (project.includes(".")) {
+  if (project.includes('.')) {
     filter = {
       customDomain: project,
     };

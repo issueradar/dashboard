@@ -1,12 +1,12 @@
-import NextAuth, { type NextAuthOptions } from "next-auth";
-import GitHubProvider from "next-auth/providers/github";
-import { PrismaAdapter } from "@next-auth/prisma-adapter";
-import prisma from "@/lib/prisma";
+import NextAuth, { type NextAuthOptions } from 'next-auth';
+import GitHubProvider from 'next-auth/providers/github';
+import { PrismaAdapter } from '@next-auth/prisma-adapter';
+import prisma from '@/lib/prisma';
 
 const VERCEL_DEPLOYMENT = !!process.env.VERCEL_URL;
 
 if (!process.env.GITHUB_ID || !process.env.GITHUB_SECRET)
-  throw new Error("Failed to initialize Github authentication");
+  throw new Error('Failed to initialize Github authentication');
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -27,18 +27,18 @@ export const authOptions: NextAuthOptions = {
   pages: {
     signIn: `/login`,
     verifyRequest: `/login`,
-    error: "/login", // Error code passed in query string as ?error=
+    error: '/login', // Error code passed in query string as ?error=
   },
   adapter: PrismaAdapter(prisma),
   cookies: {
     sessionToken: {
-      name: `${VERCEL_DEPLOYMENT ? "__Secure-" : ""}next-auth.session-token`,
+      name: `${VERCEL_DEPLOYMENT ? '__Secure-' : ''}next-auth.session-token`,
       options: {
         httpOnly: true,
-        sameProject: "lax",
-        path: "/",
+        sameSite: 'lax',
+        path: '/',
         // When working on localhost, the cookie domain must be omitted entirely (https://stackoverflow.com/a/1188145)
-        domain: VERCEL_DEPLOYMENT ? ".vercel.pub" : undefined,
+        domain: VERCEL_DEPLOYMENT ? '.vercel.pub' : undefined,
         secure: VERCEL_DEPLOYMENT,
       },
     },
