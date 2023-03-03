@@ -8,7 +8,7 @@ import type { Meta, WithChildren } from '@/types';
 
 interface LayoutProps extends WithChildren {
   meta?: Meta;
-  siteId?: string;
+  projectId?: string;
   subdomain?: string;
 }
 
@@ -56,10 +56,10 @@ export default function Layout({ meta, children, subdomain }: LayoutProps) {
         <meta property="og:description" content={meta?.description} />
         <meta property="og:url" content={meta?.ogUrl} />
         <meta property="og:image" content={meta?.ogImage} />
-        <meta property="og:type" content="website" />
+        <meta property="og:type" content="webproject" />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:site" content="@Vercel" />
+        <meta name="twitter:project" content="@Vercel" />
         <meta name="twitter:creator" content="@StevenTey" />
         <meta name="twitter:title" content={meta?.title} />
         <meta name="twitter:description" content={meta?.description} />
@@ -128,7 +128,7 @@ export default function Layout({ meta, children, subdomain }: LayoutProps) {
                 closeModal ? 'lg:block hidden' : ''
               } text-sm text-gray-700 mt-2 lg:mt-0`}
             >
-              This is a demo site showcasing how to build a multi-tenant
+              This is a demo project showcasing how to build a multi-tenant
               application with{' '}
               <a
                 className="text-black font-semibold underline"

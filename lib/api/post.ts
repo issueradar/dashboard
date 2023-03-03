@@ -3,16 +3,16 @@ import prisma from "@/lib/prisma";
 import { NextApiRequest, NextApiResponse } from "next";
 import { unstable_getServerSession } from "next-auth/next";
 import { authOptions } from "pages/api/auth/[...nextauth]";
-import type { Post, Site } from ".prisma/client";
+import type { Post, Project } from ".prisma/client";
 import type { Session } from "next-auth";
 import { revalidate } from "@/lib/revalidate";
 import { getBlurDataURL, placeholderBlurhash } from "@/lib/utils";
 
-import type { WithSitePost } from "@/types";
+import type { WithProjectPost } from "@/types";
 
 interface AllPosts {
   posts: Array<Post>;
-  site: Site | null;
+  project: Project | null;
 }
 
 /**
@@ -29,12 +29,12 @@ export async function getPost(
   req: NextApiRequest,
   res: NextApiResponse,
   session: Session
-): Promise<void | NextApiResponse<AllPosts | (WithSitePost | null)>> {
-  const { postId, siteId, published } = req.query;
+): Promise<void | NextApiResponse<AllPosts | (WithProjectPost | null)>> {
+  const { postId, projectId, published } = req.query;
 
   if (
     Array.isArray(postId) ||
-    Array.isArray(siteId) ||
+    Array.isArray(projectId) ||
     Array.isArray(published) ||
     !session.user.id
   )
@@ -45,35 +45,35 @@ export async function getPost(
       const post = await prisma.post.findFirst({
         where: {
           id: postId,
-          site: {
+          project: {
             user: {
               id: session.user.id,
             },
           },
         },
         include: {
-          site: true,
+          project: true,
         },
       });
 
       return res.status(200).json(post);
     }
 
-    const site = await prisma.site.findFirst({
+    const project = await prisma.project.findFirst({
       where: {
-        id: siteId,
+        id: projectId,
         user: {
           id: session.user.id,
         },
       },
     });
 
-    const posts = !site
+    const posts = !project
       ? []
       : await prisma.post.findMany({
           where: {
-            site: {
-              id: siteId,
+            project: {
+              id: projectId,
             },
             published: JSON.parse(published || "true"),
           },
@@ -84,7 +84,7 @@ export async function getPost(
 
     return res.status(200).json({
       posts,
-      site,
+      project,
     });
   } catch (error) {
     console.error(error);
@@ -95,9 +95,9 @@ export async function getPost(
 /**
  * Create Post
  *
- * Creates a new post from a provided `siteId` query parameter.
+ * Creates a new post from a provided `projectId` query parameter.
  *
- * Once created, the sites new `postId` will be returned.
+ * Once created, the projects new `postId` will be returned.
  *
  * @param req - Next.js API Request
  * @param res - Next.js API Response
@@ -109,32 +109,32 @@ export async function createPost(
 ): Promise<void | NextApiResponse<{
   postId: string;
 }>> {
-  const { siteId } = req.query;
+  const { projectId } = req.query;
 
-  if (!siteId || typeof siteId !== "string" || !session?.user?.id) {
+  if (!projectId || typeof projectId !== "string" || !session?.user?.id) {
     return res
       .status(400)
-      .json({ error: "Missing or misconfigured site ID or session ID" });
+      .json({ error: "Missing or misconfigured project ID or session ID" });
   }
 
-  const site = await prisma.site.findFirst({
+  const project = await prisma.project.findFirst({
     where: {
-      id: siteId,
+      id: projectId,
       user: {
         id: session.user.id,
       },
     },
   });
-  if (!site) return res.status(404).end("Site not found");
+  if (!project) return res.status(404).end("Project not found");
 
   try {
     const response = await prisma.post.create({
       data: {
         image: `/placeholder.png`,
         imageBlurhash: placeholderBlurhash,
-        site: {
+        project: {
           connect: {
-            id: siteId,
+            id: projectId,
           },
         },
       },
@@ -168,10 +168,10 @@ export async function deletePost(
   if (!postId || typeof postId !== "string" || !session?.user?.id) {
     return res
       .status(400)
-      .json({ error: "Missing or misconfigured site ID or session ID" });
+      .json({ error: "Missing or misconfigured project ID or session ID" });
   }
 
-  const site = await prisma.site.findFirst({
+  const project = await prisma.project.findFirst({
     where: {
       posts: {
         some: {
@@ -183,7 +183,7 @@ export async function deletePost(
       },
     },
   });
-  if (!site) return res.status(404).end("Site not found");
+  if (!project) return res.status(404).end("Project not found");
 
   try {
     const response = await prisma.post.delete({
@@ -191,24 +191,24 @@ export async function deletePost(
         id: postId,
       },
       include: {
-        site: {
+        project: {
           select: { subdomain: true, customDomain: true },
         },
       },
     });
-    if (response?.site?.subdomain) {
+    if (response?.project?.subdomain) {
       // revalidate for subdomain
       await revalidate(
-        `https://${response.site?.subdomain}.vercel.pub`, // hostname to be revalidated
-        response.site.subdomain, // siteId
+        `https://${response.project?.subdomain}.vercel.pub`, // hostname to be revalidated
+        response.project.subdomain, // projectId
         response.slug // slugname for the post
       );
     }
-    if (response?.site?.customDomain)
+    if (response?.project?.customDomain)
       // revalidate for custom domain
       await revalidate(
-        `https://${response.site.customDomain}`, // hostname to be revalidated
-        response.site.customDomain, // siteId
+        `https://${response.project.customDomain}`, // hostname to be revalidated
+        response.project.customDomain, // projectId
         response.slug // slugname for the post
       );
 
@@ -256,10 +256,10 @@ export async function updatePost(
   if (!id || typeof id !== "string" || !session?.user?.id) {
     return res
       .status(400)
-      .json({ error: "Missing or misconfigured site ID or session ID" });
+      .json({ error: "Missing or misconfigured project ID or session ID" });
   }
 
-  const site = await prisma.site.findFirst({
+  const project = await prisma.project.findFirst({
     where: {
       posts: {
         some: {
@@ -271,7 +271,7 @@ export async function updatePost(
       },
     },
   });
-  if (!site) return res.status(404).end("Site not found");
+  if (!project) return res.status(404).end("Project not found");
 
   try {
     const post = await prisma.post.update({
@@ -292,7 +292,7 @@ export async function updatePost(
       // revalidate for subdomain
       await revalidate(
         `https://${subdomain}.vercel.pub`, // hostname to be revalidated
-        subdomain, // siteId
+        subdomain, // projectId
         slug // slugname for the post
       );
     }
@@ -300,7 +300,7 @@ export async function updatePost(
       // revalidate for custom domain
       await revalidate(
         `https://${customDomain}`, // hostname to be revalidated
-        customDomain, // siteId
+        customDomain, // projectId
         slug // slugname for the post
       );
 

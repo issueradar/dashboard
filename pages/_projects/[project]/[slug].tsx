@@ -5,8 +5,8 @@ import { useRouter } from 'next/router';
 import BlogCard from '@/components/BlogCard';
 import BlurImage from '@/components/BlurImage';
 import Examples from '@/components/mdx/Examples';
-import Layout from '@/components/sites/Layout';
-import Loader from '@/components/sites/Loader';
+import Layout from '@/components/projects/Layout';
+import Loader from '@/components/projects/Loader';
 import prisma from '@/lib/prisma';
 import Tweet from '@/components/mdx/Tweet';
 import {
@@ -15,7 +15,7 @@ import {
   replaceTweets,
 } from '@/lib/remark-plugins';
 
-import type { AdjacentPost, Meta, _SiteSlugData } from '@/types';
+import type { AdjacentPost, Meta, _ProjectSlugData } from '@/types';
 import type { GetStaticPaths, GetStaticProps } from 'next';
 import type { MDXRemoteSerializeResult } from 'next-mdx-remote';
 import type { ParsedUrlQuery } from 'querystring';
@@ -29,7 +29,7 @@ const components = {
 };
 
 interface PathProps extends ParsedUrlQuery {
-  site: string;
+  project: string;
   slug: string;
 }
 
@@ -45,7 +45,7 @@ export default function Post({
   const router = useRouter();
   if (router.isFallback) return <Loader />;
 
-  const data = JSON.parse(stringifiedData) as _SiteSlugData & {
+  const data = JSON.parse(stringifiedData) as _ProjectSlugData & {
     mdxSource: MDXRemoteSerializeResult<Record<string, unknown>>;
   };
   const adjacentPosts = JSON.parse(
@@ -56,12 +56,12 @@ export default function Post({
     description: data.description,
     logo: '/logo.png',
     ogImage: data.image,
-    ogUrl: `https://${data.site?.subdomain}.vercel.pub/${data.slug}`,
+    ogUrl: `https://${data.project?.subdomain}.vercel.pub/${data.slug}`,
     title: data.title,
   } as Meta;
 
   return (
-    <Layout meta={meta} subdomain={data.site?.subdomain ?? undefined}>
+    <Layout meta={meta} subdomain={data.project?.subdomain ?? undefined}>
       <div className="flex flex-col justify-center items-center">
         <div className="text-center w-full md:w-7/12 m-auto">
           <p className="text-sm md:text-base font-light text-gray-500 w-10/12 m-auto my-5">
@@ -77,20 +77,20 @@ export default function Post({
         <a
           // if you are using Github OAuth, you can get rid of the Twitter option
           href={
-            data.site?.user?.username
-              ? `https://twitter.com/${data.site.user.username}`
-              : `https://github.com/${data.site?.user?.gh_username}`
+            data.project?.user?.username
+              ? `https://twitter.com/${data.project.user.username}`
+              : `https://github.com/${data.project?.user?.gh_username}`
           }
           rel="noreferrer"
           target="_blank"
         >
           <div className="my-8">
             <div className="relative w-8 h-8 md:w-12 md:h-12 rounded-full overflow-hidden inline-block align-middle">
-              {data.site?.user?.image ? (
+              {data.project?.user?.image ? (
                 <BlurImage
-                  alt={data.site?.user?.name ?? 'User Avatar'}
+                  alt={data.project?.user?.name ?? 'User Avatar'}
                   height={80}
-                  src={data.site.user.image}
+                  src={data.project.user.image}
                   width={80}
                 />
               ) : (
@@ -100,7 +100,8 @@ export default function Post({
               )}
             </div>
             <div className="inline-block text-md md:text-lg align-middle ml-3">
-              by <span className="font-semibold">{data.site?.user?.name}</span>
+              by{' '}
+              <span className="font-semibold">{data.project?.user?.name}</span>
             </div>
           </div>
         </a>
@@ -160,14 +161,14 @@ export const getStaticPaths: GetStaticPaths<PathProps> = async () => {
   const posts = await prisma.post.findMany({
     where: {
       published: true,
-      // you can remove this if you want to generate all sites at build time
-      site: {
+      // you can remove this if you want to generate all projects at build time
+      project: {
         subdomain: 'demo',
       },
     },
     select: {
       slug: true,
-      site: {
+      project: {
         select: {
           subdomain: true,
           customDomain: true,
@@ -178,19 +179,19 @@ export const getStaticPaths: GetStaticPaths<PathProps> = async () => {
 
   return {
     paths: posts.flatMap((post) => {
-      if (post.site === null || post.site.subdomain === null) return [];
+      if (post.project === null || post.project.subdomain === null) return [];
 
-      if (post.site.customDomain) {
+      if (post.project.customDomain) {
         return [
           {
             params: {
-              site: post.site.customDomain,
+              project: post.project.customDomain,
               slug: post.slug,
             },
           },
           {
             params: {
-              site: post.site.subdomain,
+              project: post.project.subdomain,
               slug: post.slug,
             },
           },
@@ -198,7 +199,7 @@ export const getStaticPaths: GetStaticPaths<PathProps> = async () => {
       } else {
         return {
           params: {
-            site: post.site.subdomain,
+            project: post.project.subdomain,
             slug: post.slug,
           },
         };
@@ -213,36 +214,36 @@ export const getStaticProps: GetStaticProps<PostProps, PathProps> = async ({
 }) => {
   if (!params) throw new Error('No path parameters found');
 
-  const { site, slug } = params;
+  const { project, slug } = params;
 
   let filter: {
     subdomain?: string;
     customDomain?: string;
   } = {
-    subdomain: site,
+    subdomain: project,
   };
 
-  if (site.includes('.')) {
+  if (project.includes('.')) {
     filter = {
-      customDomain: site,
+      customDomain: project,
     };
   }
 
   const data = (await prisma.post.findFirst({
     where: {
-      site: {
+      project: {
         ...filter,
       },
       slug,
     },
     include: {
-      site: {
+      project: {
         include: {
           user: true,
         },
       },
     },
-  })) as _SiteSlugData | null;
+  })) as _ProjectSlugData | null;
 
   // console.log(data);
 
@@ -252,7 +253,7 @@ export const getStaticProps: GetStaticProps<PostProps, PathProps> = async ({
     getMdxSource(data.content ?? ''),
     prisma.post.findMany({
       where: {
-        site: {
+        project: {
           ...filter,
         },
         published: true,

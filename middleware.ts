@@ -56,8 +56,8 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.rewrite(new URL(`/home${path}`, req.url));
   }
 
-  // rewrite everything else to `/_sites/[site] dynamic route
+  // rewrite everything else to `/_projects/[project] dynamic route
   return NextResponse.rewrite(
-    new URL(`/_sites/${currentHost}${path}`, req.url),
+    new URL(`/_projects/${currentHost}${path}`, req.url),
   );
 }

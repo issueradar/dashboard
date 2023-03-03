@@ -1,21 +1,21 @@
-import toast, { Toaster } from "react-hot-toast";
-import useSWR from "swr";
-import { useRouter } from "next/router";
-import { useState, useEffect } from "react";
+import toast, { Toaster } from 'react-hot-toast';
+import useSWR from 'swr';
+import { useRouter } from 'next/router';
+import { useState, useEffect } from 'react';
 
-import BlurImage from "@/components/BlurImage";
-import CloudinaryUploadWidget from "@/components/Cloudinary";
-import Layout from "@/components/app/Layout";
-import Loader from "@/components/app/Loader";
-import LoadingDots from "@/components/app/loading-dots";
-import Modal from "@/components/Modal";
-import { fetcher } from "@/lib/fetcher";
-import { HttpMethod } from "@/types";
+import BlurImage from '@/components/BlurImage';
+import CloudinaryUploadWidget from '@/components/Cloudinary';
+import Layout from '@/components/app/Layout';
+import Loader from '@/components/app/Loader';
+import LoadingDots from '@/components/app/loading-dots';
+import Modal from '@/components/Modal';
+import { fetcher } from '@/lib/fetcher';
+import { HttpMethod } from '@/types';
 
-import type { ChangeEvent } from "react";
+import type { ChangeEvent } from 'react';
 
-import type { WithSitePost } from "@/types";
-import { placeholderBlurhash } from "@/lib/utils";
+import type { WithProjectPost } from '@/types';
+import { placeholderBlurhash } from '@/lib/utils';
 
 interface SettingsData {
   slug: string;
@@ -30,13 +30,13 @@ export default function PostSettings() {
   // TODO: Undefined check redirects to error
   const { id: postId } = router.query;
 
-  const { data: settings, isValidating } = useSWR<WithSitePost>(
+  const { data: settings, isValidating } = useSWR<WithProjectPost>(
     `/api/post?postId=${postId}`,
     fetcher,
     {
-      onError: () => router.push("/"),
+      onError: () => router.push('/'),
       revalidateOnFocus: false,
-    }
+    },
   );
 
   const [saving, setSaving] = useState(false);
@@ -44,18 +44,18 @@ export default function PostSettings() {
   const [deletingPost, setDeletingPost] = useState(false);
 
   const [data, setData] = useState<SettingsData>({
-    image: settings?.image ?? "",
-    imageBlurhash: settings?.imageBlurhash ?? "",
-    slug: settings?.slug ?? "",
-    id: settings?.id ?? "",
+    image: settings?.image ?? '',
+    imageBlurhash: settings?.imageBlurhash ?? '',
+    slug: settings?.slug ?? '',
+    id: settings?.id ?? '',
   });
 
   useEffect(() => {
     if (settings)
       setData({
         slug: settings.slug,
-        image: settings.image ?? "",
-        imageBlurhash: settings.imageBlurhash ?? "",
+        image: settings.image ?? '',
+        imageBlurhash: settings.imageBlurhash ?? '',
         id: settings.id,
       });
   }, [settings]);
@@ -64,18 +64,18 @@ export default function PostSettings() {
     setSaving(true);
 
     try {
-      const response = await fetch("/api/post", {
+      const response = await fetch('/api/post', {
         method: HttpMethod.PUT,
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           id: postId,
           slug: data.slug,
           image: data.image,
           imageBlurhash: data.imageBlurhash,
-          subdomain: settings?.site?.subdomain,
-          customDomain: settings?.site?.customDomain,
+          subdomain: settings?.project?.subdomain,
+          customDomain: settings?.project?.customDomain,
         }),
       });
 
@@ -95,7 +95,7 @@ export default function PostSettings() {
       });
 
       if (response.ok) {
-        router.push(`/site/${settings?.site?.id}`);
+        router.push(`/project/${settings?.project?.id}`);
       }
     } catch (error) {
       console.error(error);
@@ -113,7 +113,7 @@ export default function PostSettings() {
 
   return (
     <>
-      <Layout siteId={settings?.site?.id}>
+      <Layout projectId={settings?.project?.id}>
         <Toaster
           position="top-right"
           toastOptions={{
@@ -127,7 +127,7 @@ export default function PostSettings() {
               <h2 className="font-cal text-2xl">Post Slug</h2>
               <div className="border border-gray-700 rounded-lg flex items-center max-w-lg">
                 <span className="px-5 font-cal rounded-l-lg border-r border-gray-600 whitespace-nowrap">
-                  {settings?.site?.subdomain}.vercel.pub/
+                  {settings?.project?.subdomain}.vercel.pub/
                 </span>
                 <input
                   className="w-full px-5 py-3 font-cal text-gray-700 bg-white border-none focus:outline-none focus:ring-0 rounded-none rounded-r-lg placeholder-gray-400"
@@ -145,7 +145,7 @@ export default function PostSettings() {
               <h2 className="font-cal text-2xl">Thumbnail Image</h2>
               <div
                 className={`${
-                  data.image ? "" : "animate-pulse bg-gray-300 h-150"
+                  data.image ? '' : 'animate-pulse bg-gray-300 h-150'
                 } relative mt-5 w-full border-2 border-gray-800 border-dashed rounded-md`}
               >
                 <CloudinaryUploadWidget
@@ -236,11 +236,11 @@ export default function PostSettings() {
                 disabled={deletingPost}
                 className={`${
                   deletingPost
-                    ? "cursor-not-allowed text-gray-400 bg-gray-50"
-                    : "bg-white text-gray-600 hover:text-black"
+                    ? 'cursor-not-allowed text-gray-400 bg-gray-50'
+                    : 'bg-white text-gray-600 hover:text-black'
                 } w-full px-5 py-5 text-sm border-t border-l border-gray-300 rounded-br focus:outline-none focus:ring-0 transition-all ease-in-out duration-150`}
               >
-                {deletingPost ? <LoadingDots /> : "DELETE POST"}
+                {deletingPost ? <LoadingDots /> : 'DELETE POST'}
               </button>
             </div>
           </form>
@@ -254,11 +254,11 @@ export default function PostSettings() {
               disabled={saving}
               className={`${
                 saving
-                  ? "cursor-not-allowed bg-gray-300 border-gray-300"
-                  : "bg-black hover:bg-white hover:text-black border-black"
+                  ? 'cursor-not-allowed bg-gray-300 border-gray-300'
+                  : 'bg-black hover:bg-white hover:text-black border-black'
               } mx-2 w-36 h-12 text-lg text-white border-2 focus:outline-none transition-all ease-in-out duration-150`}
             >
-              {saving ? <LoadingDots /> : "Save Changes"}
+              {saving ? <LoadingDots /> : 'Save Changes'}
             </button>
           </div>
         </footer>

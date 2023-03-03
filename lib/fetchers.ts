@@ -1,26 +1,26 @@
 import { cache } from "react";
-import type { _SiteData } from "@/types";
+import type { _ProjectData } from "@/types";
 import prisma from "@/lib/prisma";
 import remarkMdx from "remark-mdx";
 import { remark } from "remark";
 import { serialize } from "next-mdx-remote/serialize";
 import { replaceExamples, replaceTweets } from "@/lib/remark-plugins";
 
-export const getSiteData = cache(async (site: string): Promise<_SiteData> => {
+export const getProjectData = cache(async (project: string): Promise<_ProjectData> => {
   let filter: {
     subdomain?: string;
     customDomain?: string;
   } = {
-    subdomain: site,
+    subdomain: project,
   };
 
-  if (site.includes(".")) {
+  if (project.includes(".")) {
     filter = {
-      customDomain: site,
+      customDomain: project,
     };
   }
 
-  const data = (await prisma.site.findUnique({
+  const data = (await prisma.project.findUnique({
     where: filter,
     include: {
       user: true,
@@ -35,34 +35,34 @@ export const getSiteData = cache(async (site: string): Promise<_SiteData> => {
         ],
       },
     },
-  })) as _SiteData;
+  })) as _ProjectData;
 
   return data;
 });
 
-export const getPostData = cache(async (site: string, slug: string) => {
+export const getPostData = cache(async (project: string, slug: string) => {
   let filter: {
     subdomain?: string;
     customDomain?: string;
   } = {
-    subdomain: site,
+    subdomain: project,
   };
 
-  if (site.includes(".")) {
+  if (project.includes(".")) {
     filter = {
-      customDomain: site,
+      customDomain: project,
     };
   }
 
   const data = await prisma.post.findFirst({
     where: {
-      site: {
+      project: {
         ...filter,
       },
       slug,
     },
     include: {
-      site: {
+      project: {
         include: {
           user: true,
         },
@@ -76,7 +76,7 @@ export const getPostData = cache(async (site: string, slug: string) => {
     getMdxSource(data.content!),
     prisma.post.findMany({
       where: {
-        site: {
+        project: {
           ...filter,
         },
         published: true,

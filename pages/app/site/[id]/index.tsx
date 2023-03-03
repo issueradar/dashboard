@@ -9,30 +9,30 @@ import LoadingDots from '@/components/app/loading-dots';
 import { fetcher } from '@/lib/fetcher';
 import { HttpMethod } from '@/types';
 
-import type { Post, Site } from '@prisma/client';
+import type { Post, Project } from '@prisma/client';
 
-interface SitePostData {
+interface ProjectPostData {
   posts: Array<Post>;
-  site: Site | null;
+  project: Project | null;
 }
 
-export default function SiteIndex() {
+export default function ProjectIndex() {
   const [creatingPost, setCreatingPost] = useState(false);
 
   const router = useRouter();
-  const { id: siteId } = router.query;
+  const { id: projectId } = router.query;
 
-  const { data } = useSWR<SitePostData>(
-    siteId && `/api/post?siteId=${siteId}&published=true`,
+  const { data } = useSWR<ProjectPostData>(
+    projectId && `/api/post?projectId=${projectId}&published=true`,
     fetcher,
     {
-      onSuccess: (data) => !data?.site && router.push('/'),
+      onSuccess: (data) => !data?.project && router.push('/'),
     },
   );
 
-  async function createPost(siteId: string) {
+  async function createPost(projectId: string) {
     try {
-      const res = await fetch(`/api/post?siteId=${siteId}`, {
+      const res = await fetch(`/api/post?projectId=${projectId}`, {
         method: HttpMethod.POST,
         headers: {
           'Content-Type': 'application/json',
@@ -53,12 +53,12 @@ export default function SiteIndex() {
       <div className="py-20 max-w-screen-xl mx-auto px-10 sm:px-20">
         <div className="flex flex-col sm:flex-row space-y-5 sm:space-y-0 justify-between items-center">
           <h1 className="font-cal text-5xl">
-            Posts for {data ? data?.site?.name : '...'}
+            Posts for {data ? data?.project?.name : '...'}
           </h1>
           <button
             onClick={() => {
               setCreatingPost(true);
-              createPost(siteId as string);
+              createPost(projectId as string);
             }}
             className={`${
               creatingPost
@@ -103,12 +103,12 @@ export default function SiteIndex() {
                       </p>
                       <a
                         className="font-cal px-3 py-1 tracking-wide rounded bg-gray-200 text-gray-600 absolute bottom-5 left-10 whitespace-nowrap"
-                        href={`https://${data.site?.subdomain}.vercel.pub/${post.slug}`}
+                        href={`https://${data.project?.subdomain}.vercel.pub/${post.slug}`}
                         onClick={(e) => e.stopPropagation()}
                         rel="noreferrer"
                         target="_blank"
                       >
-                        {data.site?.subdomain}.vercel.pub/{post.slug} ↗
+                        {data.project?.subdomain}.vercel.pub/{post.slug} ↗
                       </a>
                     </div>
                   </div>

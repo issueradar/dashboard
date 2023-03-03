@@ -42,10 +42,10 @@ export default function Login() {
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={description} />
         <meta property="og:image" content={logo} />
-        <meta property="og:type" content="website" />
+        <meta property="og:type" content="webproject" />
 
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:site" content="@Elegance" />
+        <meta name="twitter:project" content="@Elegance" />
         <meta name="twitter:creator" content="@StevenTey" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={description} />

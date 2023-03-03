@@ -3,7 +3,7 @@ import { HttpMethod } from "@/types";
 
 import type { NextApiRequest, NextApiResponse } from "next";
 
-export default async function SaveSiteSettings(
+export default async function SaveProjectSettings(
   req: NextApiRequest,
   res: NextApiResponse
 ) {

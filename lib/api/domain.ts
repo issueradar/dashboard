@@ -7,7 +7,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
  * Add Domain
  *
  * Adds a new domain to the Vercel project using a provided
- * `domain` & `siteId` query parameters
+ * `domain` & `projectId` query parameters
  *
  * @param req - Next.js API Request
  * @param res - Next.js API Response
@@ -16,9 +16,9 @@ export async function createDomain(
   req: NextApiRequest,
   res: NextApiResponse
 ): Promise<void | NextApiResponse> {
-  const { domain, siteId } = req.query;
+  const { domain, projectId } = req.query;
 
-  if (Array.isArray(domain) || Array.isArray(siteId))
+  if (Array.isArray(domain) || Array.isArray(projectId))
     return res.status(400).end("Bad request. Query parameters are not valid.");
 
   try {
@@ -43,9 +43,9 @@ export async function createDomain(
     if (data.error?.code === "domain_taken") return res.status(409).end();
 
     // Domain is successfully added
-    await prisma.site.update({
+    await prisma.project.update({
       where: {
-        id: siteId,
+        id: projectId,
       },
       data: {
         customDomain: domain,
@@ -63,7 +63,7 @@ export async function createDomain(
  * Delete Domain
  *
  * Remove a domain from the vercel project using a provided
- * `domain` & `siteId` query parameters
+ * `domain` & `projectId` query parameters
  *
  * @param req - Next.js API Request
  * @param res - Next.js API Response
@@ -72,9 +72,9 @@ export async function deleteDomain(
   req: NextApiRequest,
   res: NextApiResponse
 ): Promise<void | NextApiResponse> {
-  const { domain, siteId } = req.query;
+  const { domain, projectId } = req.query;
 
-  if (Array.isArray(domain) || Array.isArray(siteId))
+  if (Array.isArray(domain) || Array.isArray(projectId))
     res.status(400).end("Bad request. Query parameters cannot be an array.");
 
   try {
@@ -90,9 +90,9 @@ export async function deleteDomain(
 
     await response.json();
 
-    await prisma.site.update({
+    await prisma.project.update({
       where: {
-        id: siteId as string,
+        id: projectId as string,
       },
       data: {
         customDomain: null,

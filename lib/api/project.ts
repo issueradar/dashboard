@@ -1,44 +1,44 @@
-import cuid from "cuid";
-import { NextApiRequest, NextApiResponse } from "next";
-import { unstable_getServerSession } from "next-auth/next";
-import { authOptions } from "pages/api/auth/[...nextauth]";
-import prisma from "@/lib/prisma";
+import cuid from 'cuid';
+import { NextApiRequest, NextApiResponse } from 'next';
+import { unstable_getServerSession } from 'next-auth/next';
+import { authOptions } from 'pages/api/auth/[...nextauth]';
+import prisma from '@/lib/prisma';
 
-import type { Site } from ".prisma/client";
-import type { Session } from "next-auth";
-import { placeholderBlurhash } from "../utils";
+import type { Project } from '.prisma/client';
+import type { Session } from 'next-auth';
+import { placeholderBlurhash } from '../utils';
 
 /**
- * Get Site
+ * Get Project
  *
- * Fetches & returns either a single or all sites available depending on
- * whether a `siteId` query parameter is provided. If not all sites are
+ * Fetches & returns either a single or all projects available depending on
+ * whether a `projectId` query parameter is provided. If not all projects are
  * returned
  *
  * @param req - Next.js API Request
  * @param res - Next.js API Response
  * @param session - NextAuth.js session
  */
-export async function getSite(
+export async function getProject(
   req: NextApiRequest,
   res: NextApiResponse,
-  session: Session
-): Promise<void | NextApiResponse<Array<Site> | (Site | null)>> {
-  const { siteId } = req.query;
+  session: Session,
+): Promise<void | NextApiResponse<Array<Project> | (Project | null)>> {
+  const { projectId } = req.query;
 
-  if (Array.isArray(siteId))
+  if (Array.isArray(projectId))
     return res
       .status(400)
-      .end("Bad request. siteId parameter cannot be an array.");
+      .end('Bad request. projectId parameter cannot be an array.');
 
   if (!session.user.id)
-    return res.status(500).end("Server failed to get session user ID");
+    return res.status(500).end('Server failed to get session user ID');
 
   try {
-    if (siteId) {
-      const settings = await prisma.site.findFirst({
+    if (projectId) {
+      const settings = await prisma.project.findFirst({
         where: {
-          id: siteId,
+          id: projectId,
           user: {
             id: session.user.id,
           },
@@ -48,7 +48,7 @@ export async function getSite(
       return res.status(200).json(settings);
     }
 
-    const sites = await prisma.site.findMany({
+    const projects = await prisma.project.findMany({
       where: {
         user: {
           id: session.user.id,
@@ -56,7 +56,7 @@ export async function getSite(
       },
     });
 
-    return res.status(200).json(sites);
+    return res.status(200).json(projects);
   } catch (error) {
     console.error(error);
     return res.status(500).end(error);
@@ -64,37 +64,37 @@ export async function getSite(
 }
 
 /**
- * Create Site
+ * Create Project
  *
- * Creates a new site from a set of provided query parameters.
+ * Creates a new project from a set of provided query parameters.
  * These include:
  *  - name
  *  - description
  *  - subdomain
  *  - userId
  *
- * Once created, the sites new `siteId` will be returned.
+ * Once created, the projects new `projectId` will be returned.
  *
  * @param req - Next.js API Request
  * @param res - Next.js API Response
  */
-export async function createSite(
+export async function createProject(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ): Promise<void | NextApiResponse<{
-  siteId: string;
+  projectId: string;
 }>> {
   const { name, subdomain, description, userId } = req.body;
 
-  const sub = subdomain.replace(/[^a-zA-Z0-9/-]+/g, "");
+  const sub = subdomain.replace(/[^a-zA-Z0-9/-]+/g, '');
 
   try {
-    const response = await prisma.site.create({
+    const response = await prisma.project.create({
       data: {
         name: name,
         description: description,
         subdomain: sub.length > 0 ? sub : cuid(),
-        logo: "/logo.png",
+        logo: '/logo.png',
         image: `/placeholder.png`,
         imageBlurhash: placeholderBlurhash,
         user: {
@@ -106,7 +106,7 @@ export async function createSite(
     });
 
     return res.status(201).json({
-      siteId: response.id,
+      projectId: response.id,
     });
   } catch (error) {
     console.error(error);
@@ -115,53 +115,55 @@ export async function createSite(
 }
 
 /**
- * Delete Site
+ * Delete Project
  *
- * Deletes a site from the database using a provided `siteId` query
+ * Deletes a project from the database using a provided `projectId` query
  * parameter.
  *
  * @param req - Next.js API Request
  * @param res - Next.js API Response
  */
-export async function deleteSite(
+export async function deleteProject(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ): Promise<void | NextApiResponse> {
   const session = await unstable_getServerSession(req, res, authOptions);
-  if (!session?.user.id) return res.status(401).end("Unauthorized");
-  const { siteId } = req.query;
+  if (!session?.user.id) return res.status(401).end('Unauthorized');
+  const { projectId } = req.query;
 
-  if (!siteId || typeof siteId !== "string") {
-    return res.status(400).json({ error: "Missing or misconfigured site ID" });
+  if (!projectId || typeof projectId !== 'string') {
+    return res
+      .status(400)
+      .json({ error: 'Missing or misconfigured project ID' });
   }
 
-  const site = await prisma.site.findFirst({
+  const project = await prisma.project.findFirst({
     where: {
-      id: siteId,
+      id: projectId,
       user: {
         id: session.user.id,
       },
     },
   });
-  if (!site) return res.status(404).end("Site not found");
+  if (!project) return res.status(404).end('Project not found');
 
-  if (Array.isArray(siteId))
+  if (Array.isArray(projectId))
     return res
       .status(400)
-      .end("Bad request. siteId parameter cannot be an array.");
+      .end('Bad request. projectId parameter cannot be an array.');
 
   try {
     await prisma.$transaction([
       prisma.post.deleteMany({
         where: {
-          site: {
-            id: siteId,
+          project: {
+            id: projectId,
           },
         },
       }),
-      prisma.site.delete({
+      prisma.project.delete({
         where: {
-          id: siteId,
+          id: projectId,
         },
       }),
     ]);
@@ -174,9 +176,9 @@ export async function deleteSite(
 }
 
 /**
- * Update site
+ * Update project
  *
- * Updates a site & all of its data using a collection of provided
+ * Updates a project & all of its data using a collection of provided
  * query parameters. These include the following:
  *  - id
  *  - currentSubdomain
@@ -188,12 +190,12 @@ export async function deleteSite(
  * @param req - Next.js API Request
  * @param res - Next.js API Response
  */
-export async function updateSite(
+export async function updateProject(
   req: NextApiRequest,
-  res: NextApiResponse
-): Promise<void | NextApiResponse<Site>> {
+  res: NextApiResponse,
+): Promise<void | NextApiResponse<Project>> {
   const session = await unstable_getServerSession(req, res, authOptions);
-  if (!session?.user.id) return res.status(401).end("Unauthorized");
+  if (!session?.user.id) return res.status(401).end('Unauthorized');
 
   const {
     id,
@@ -205,11 +207,13 @@ export async function updateSite(
     imageBlurhash,
   } = req.body;
 
-  if (!id || typeof id !== "string") {
-    return res.status(400).json({ error: "Missing or misconfigured site ID" });
+  if (!id || typeof id !== 'string') {
+    return res
+      .status(400)
+      .json({ error: 'Missing or misconfigured project ID' });
   }
 
-  const site = await prisma.site.findFirst({
+  const project = await prisma.project.findFirst({
     where: {
       id,
       user: {
@@ -217,13 +221,13 @@ export async function updateSite(
       },
     },
   });
-  if (!site) return res.status(404).end("Site not found");
+  if (!project) return res.status(404).end('Project not found');
 
-  const sub = req.body.subdomain.replace(/[^a-zA-Z0-9/-]+/g, "");
+  const sub = req.body.subdomain.replace(/[^a-zA-Z0-9/-]+/g, '');
   const subdomain = sub.length > 0 ? sub : currentSubdomain;
 
   try {
-    const response = await prisma.site.update({
+    const response = await prisma.project.update({
       where: {
         id: id,
       },

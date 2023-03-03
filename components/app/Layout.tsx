@@ -10,18 +10,18 @@ import useRequireAuth from '../../lib/useRequireAuth';
 import type { WithChildren } from '@/types';
 
 interface LayoutProps extends WithChildren {
-  siteId?: string;
+  projectId?: string;
 }
 
-export default function Layout({ siteId, children }: LayoutProps) {
+export default function Layout({ projectId, children }: LayoutProps) {
   const title = 'Platforms on Vercel';
   const description =
     'Create a fullstack application with multi-tenancy and custom domains support using Next.js, Prisma, and PostgreSQL';
   const logo = '/favicon.ico';
   const router = useRouter();
-  const sitePage = router.pathname.startsWith('/app/site/[id]');
+  const projectPage = router.pathname.startsWith('/app/project/[id]');
   const postPage = router.pathname.startsWith('/app/post/[id]');
-  const rootPage = !sitePage && !postPage;
+  const rootPage = !projectPage && !postPage;
   const tab = rootPage
     ? router.asPath.split('/')[1]
     : router.asPath.split('/')[3];
@@ -49,10 +49,10 @@ export default function Layout({ siteId, children }: LayoutProps) {
           <meta property="og:title" content={title} />
           <meta property="og:description" content={description} />
           <meta property="og:image" content={logo} />
-          <meta property="og:type" content="website" />
+          <meta property="og:type" content="webproject" />
 
           <meta name="twitter:card" content="summary_large_image" />
-          <meta name="twitter:site" content="@Vercel" />
+          <meta name="twitter:project" content="@Vercel" />
           <meta name="twitter:creator" content="@StevenTey" />
           <meta name="twitter:title" content={title} />
           <meta name="twitter:description" content={description} />
@@ -111,7 +111,7 @@ export default function Layout({ siteId, children }: LayoutProps) {
                 tab == '' ? 'border-black' : 'border-transparent'
               } py-3`}
             >
-              My Sites
+              My Projects
             </Link>
             <Link
               href="/settings"
@@ -123,15 +123,15 @@ export default function Layout({ siteId, children }: LayoutProps) {
             </Link>
           </div>
         )}
-        {sitePage && (
+        {projectPage && (
           <div className="absolute left-0 right-0 top-16 font-cal border-b bg-white border-gray-200">
             <div className="flex justify-between items-center space-x-16 max-w-screen-xl mx-auto px-10 sm:px-20">
               <Link href="/" className="md:inline-block ml-3 hidden">
-                ← All Sites
+                ← All Projects
               </Link>
               <div className="flex justify-between items-center space-x-10 md:space-x-16">
                 <Link
-                  href={`/site/${router.query.id}`}
+                  href={`/project/${router.query.id}`}
                   className={`border-b-2 ${
                     !tab ? 'border-black' : 'border-transparent'
                   } py-3`}
@@ -139,7 +139,7 @@ export default function Layout({ siteId, children }: LayoutProps) {
                   Posts
                 </Link>
                 <Link
-                  href={`/site/${router.query.id}/drafts`}
+                  href={`/project/${router.query.id}/drafts`}
                   className={`border-b-2 ${
                     tab == 'drafts' ? 'border-black' : 'border-transparent'
                   } py-3`}
@@ -147,7 +147,7 @@ export default function Layout({ siteId, children }: LayoutProps) {
                   Drafts
                 </Link>
                 <Link
-                  href={`/site/${router.query.id}/settings`}
+                  href={`/project/${router.query.id}/settings`}
                   className={`border-b-2 ${
                     tab == 'settings' ? 'border-black' : 'border-transparent'
                   } py-3`}
@@ -162,9 +162,9 @@ export default function Layout({ siteId, children }: LayoutProps) {
         {postPage && (
           <div className="absolute left-0 right-0 top-16 font-cal border-b bg-white border-gray-200">
             <div className="flex justify-between items-center space-x-16 max-w-screen-xl mx-auto px-10 sm:px-20">
-              {siteId ? (
+              {projectId ? (
                 <Link
-                  href={`/site/${siteId}`}
+                  href={`/project/${projectId}`}
                   className="md:inline-block ml-3 hidden"
                 >
                   ← All Posts

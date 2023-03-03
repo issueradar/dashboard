@@ -12,18 +12,18 @@ import { fetcher } from '@/lib/fetcher';
 import { HttpMethod } from '@/types';
 
 // import type { FormEvent } from 'react';
-import type { Site } from '@prisma/client';
+import type { Project } from '@prisma/client';
 
 export default function AppIndex() {
   const [showModal, setShowModal] = useState<boolean>(false);
-  const [creatingSite, setCreatingSite] = useState<boolean>(false);
+  const [creatingProject, setCreatingProject] = useState<boolean>(false);
   const [subdomain, setSubdomain] = useState<string>('');
   const [debouncedSubdomain] = useDebounce(subdomain, 1500);
   const [error, setError] = useState<string | null>(null);
 
-  const siteNameRef = useRef<HTMLInputElement | null>(null);
-  const siteSubdomainRef = useRef<HTMLInputElement | null>(null);
-  const siteDescriptionRef = useRef<HTMLTextAreaElement | null>(null);
+  const projectNameRef = useRef<HTMLInputElement | null>(null);
+  const projectSubdomainRef = useRef<HTMLInputElement | null>(null);
+  const projectDescriptionRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
     async function checkSubDomain() {
@@ -47,31 +47,31 @@ export default function AppIndex() {
   const { data: session } = useSession();
   const sessionId = session?.user?.id;
 
-  const { data: sites } = useSWR<Array<Site>>(
-    sessionId && `/api/site`,
+  const { data: projects } = useSWR<Array<Project>>(
+    sessionId && `/api/project`,
     fetcher,
   );
 
-  async function createSite() {
-    const res = await fetch('/api/site', {
+  async function createProject() {
+    const res = await fetch('/api/project', {
       method: HttpMethod.POST,
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         userId: sessionId,
-        name: siteNameRef.current?.value,
-        subdomain: siteSubdomainRef.current?.value,
-        description: siteDescriptionRef.current?.value,
+        name: projectNameRef.current?.value,
+        subdomain: projectSubdomainRef.current?.value,
+        description: projectDescriptionRef.current?.value,
       }),
     });
 
     if (!res.ok) {
-      alert('Failed to create site');
+      alert('Failed to create project');
     }
 
     const data = await res.json();
-    router.push(`/site/${data.siteId}`);
+    router.push(`/project/${data.projectId}`);
   }
 
   return (
@@ -80,12 +80,12 @@ export default function AppIndex() {
         <form
           onSubmit={(event) => {
             event.preventDefault();
-            setCreatingSite(true);
-            createSite();
+            setCreatingProject(true);
+            createProject();
           }}
           className="inline-block w-full max-w-md pt-8 overflow-hidden text-center align-middle transition-all bg-white shadow-xl rounded-lg"
         >
-          <h2 className="font-cal text-2xl mb-6">Create a New Site</h2>
+          <h2 className="font-cal text-2xl mb-6">Create a New Project</h2>
           <div className="grid gap-y-5 w-5/6 mx-auto">
             <div className="border border-gray-700 rounded-lg flex flex-start items-center">
               <span className="pl-5 pr-1">📌</span>
@@ -93,8 +93,8 @@ export default function AppIndex() {
                 className="w-full px-5 py-3 text-gray-700 bg-white border-none focus:outline-none focus:ring-0 rounded-none rounded-r-lg placeholder-gray-400"
                 name="name"
                 required
-                placeholder="Site Name"
-                ref={siteNameRef}
+                placeholder="Project Name"
+                ref={projectNameRef}
                 type="text"
               />
             </div>
@@ -103,9 +103,9 @@ export default function AppIndex() {
               <input
                 className="w-full px-5 py-3 text-gray-700 bg-white border-none focus:outline-none focus:ring-0 rounded-none rounded-l-lg placeholder-gray-400"
                 name="subdomain"
-                onInput={() => setSubdomain(siteSubdomainRef.current!.value)}
+                onInput={() => setSubdomain(projectSubdomainRef.current!.value)}
                 placeholder="Subdomain"
-                ref={siteSubdomainRef}
+                ref={projectSubdomainRef}
                 type="text"
               />
               <span className="px-5 bg-gray-100 h-full flex items-center rounded-r-lg border-l border-gray-600">
@@ -124,7 +124,7 @@ export default function AppIndex() {
                 className="w-full px-5 py-3 text-gray-700 bg-white border-none focus:outline-none focus:ring-0 rounded-none rounded-r-lg placeholder-gray-400"
                 name="description"
                 placeholder="Description"
-                ref={siteDescriptionRef}
+                ref={projectDescriptionRef}
                 required
                 rows={3}
               />
@@ -144,14 +144,14 @@ export default function AppIndex() {
 
             <button
               type="submit"
-              disabled={creatingSite || error !== null}
+              disabled={creatingProject || error !== null}
               className={`${
-                creatingSite || error
+                creatingProject || error
                   ? 'cursor-not-allowed text-gray-400 bg-gray-50'
                   : 'bg-white text-gray-600 hover:text-black'
               } w-full px-5 py-5 text-sm border-t border-l border-gray-300 rounded-br focus:outline-none focus:ring-0 transition-all ease-in-out duration-150`}
             >
-              {creatingSite ? <LoadingDots /> : 'CREATE SITE'}
+              {creatingProject ? <LoadingDots /> : 'CREATE PROJECT'}
             </button>
           </div>
         </form>
@@ -159,28 +159,28 @@ export default function AppIndex() {
 
       <div className="py-20 max-w-screen-xl mx-auto px-10 sm:px-20">
         <div className="flex flex-col sm:flex-row space-y-5 sm:space-y-0 justify-between items-center">
-          <h1 className="font-cal text-5xl">My Sitess</h1>
+          <h1 className="font-cal text-5xl">My Projectss</h1>
           <button
             onClick={() => setShowModal(true)}
             className="font-cal text-lg w-3/4 sm:w-40 tracking-wide text-white bg-black border-black border-2 px-5 py-3 hover:bg-white hover:text-black transition-all ease-in-out duration-150"
           >
-            New Site <span className="ml-2">＋</span>
+            New Project <span className="ml-2">＋</span>
           </button>
         </div>
         <div className="my-10 grid gap-y-10">
-          {sites ? (
-            sites.length > 0 ? (
-              sites.map((site) => (
-                <Link href={`/site/${site.id}`} key={site.id}>
+          {projects ? (
+            projects.length > 0 ? (
+              projects.map((project) => (
+                <Link href={`/project/${project.id}`} key={project.id}>
                   <div className="flex flex-col md:flex-row md:h-60 rounded-lg overflow-hidden border border-gray-200">
                     <div className="relative w-full h-60 md:h-auto md:w-1/3 md:flex-none">
-                      {site.image ? (
+                      {project.image ? (
                         <BlurImage
-                          src={site.image}
+                          src={project.image}
                           width={500}
                           height={400}
                           className="h-full object-cover"
-                          alt={site.name ?? 'Site thumbnail'}
+                          alt={project.name ?? 'Project thumbnail'}
                         />
                       ) : (
                         <div className="absolute flex items-center justify-center w-full h-full bg-gray-100 text-gray-500 text-4xl select-none">
@@ -189,18 +189,18 @@ export default function AppIndex() {
                       )}
                     </div>
                     <div className="relative p-10">
-                      <h2 className="font-cal text-3xl">{site.name}</h2>
+                      <h2 className="font-cal text-3xl">{project.name}</h2>
                       <p className="text-base my-5 line-clamp-3">
-                        {site.description}
+                        {project.description}
                       </p>
                       <a
                         className="font-cal px-3 py-1 tracking-wide rounded bg-gray-200 text-gray-600 absolute bottom-5 left-10 whitespace-nowrap"
-                        href={`https://${site.subdomain}.vercel.pub`}
+                        href={`https://${project.subdomain}.vercel.pub`}
                         onClick={(e) => e.stopPropagation()}
                         rel="noreferrer"
                         target="_blank"
                       >
-                        {site.subdomain}.vercel.pub ↗
+                        {project.subdomain}.vercel.pub ↗
                       </a>
                     </div>
                   </div>
@@ -219,7 +219,8 @@ export default function AppIndex() {
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-cal text-gray-600">
-                    No sites yet. Click &quot;New Site&quot; to create one.
+                    No projects yet. Click &quot;New Project&quot; to create
+                    one.
                   </p>
                 </div>
               </>

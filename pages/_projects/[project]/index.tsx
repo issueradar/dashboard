@@ -1,18 +1,18 @@
-import Layout from "@/components/sites/Layout";
-import Link from "next/link";
-import { useRouter } from "next/router";
-import BlurImage from "@/components/BlurImage";
-import BlogCard from "@/components/BlogCard";
-import Loader from "@/components/sites/Loader";
-import prisma from "@/lib/prisma";
+import Layout from '@/components/projects/Layout';
+import Link from 'next/link';
+import { useRouter } from 'next/router';
+import BlurImage from '@/components/BlurImage';
+import BlogCard from '@/components/BlogCard';
+import Loader from '@/components/projects/Loader';
+import prisma from '@/lib/prisma';
 
-import type { GetStaticPaths, GetStaticProps } from "next";
-import type { _SiteData, Meta } from "@/types";
-import type { ParsedUrlQuery } from "querystring";
-import { placeholderBlurhash, toDateString } from "@/lib/utils";
+import type { GetStaticPaths, GetStaticProps } from 'next';
+import type { _ProjectData, Meta } from '@/types';
+import type { ParsedUrlQuery } from 'querystring';
+import { placeholderBlurhash, toDateString } from '@/lib/utils';
 
 interface PathProps extends ParsedUrlQuery {
-  site: string;
+  project: string;
 }
 
 interface IndexProps {
@@ -23,12 +23,12 @@ export default function Index({ stringifiedData }: IndexProps) {
   const router = useRouter();
   if (router.isFallback) return <Loader />;
 
-  const data = JSON.parse(stringifiedData) as _SiteData;
+  const data = JSON.parse(stringifiedData) as _ProjectData;
 
   const meta = {
     title: data.name,
     description: data.description,
-    logo: "/logo.png",
+    logo: '/logo.png',
     ogImage: data.image,
     ogUrl: data.customDomain
       ? data.customDomain
@@ -44,7 +44,7 @@ export default function Index({ stringifiedData }: IndexProps) {
               <div className="relative group h-80 sm:h-150 w-full mx-auto overflow-hidden lg:rounded-xl">
                 {data.posts[0].image ? (
                   <BlurImage
-                    alt={data.posts[0].title ?? ""}
+                    alt={data.posts[0].title ?? ''}
                     blurDataURL={
                       data.posts[0].imageBlurhash ?? placeholderBlurhash
                     }
@@ -71,7 +71,7 @@ export default function Index({ stringifiedData }: IndexProps) {
                   <div className="relative w-8 h-8 flex-none rounded-full overflow-hidden">
                     {data.user?.image ? (
                       <BlurImage
-                        alt={data.user?.name ?? "User Avatar"}
+                        alt={data.user?.name ?? 'User Avatar'}
                         width={100}
                         height={100}
                         className="w-full h-full object-cover"
@@ -125,22 +125,22 @@ export default function Index({ stringifiedData }: IndexProps) {
 
 export const getStaticPaths: GetStaticPaths<PathProps> = async () => {
   const [subdomains, customDomains] = await Promise.all([
-    prisma.site.findMany({
-      // you can remove this if you want to generate all sites at build time
+    prisma.project.findMany({
+      // you can remove this if you want to generate all projects at build time
       where: {
-        subdomain: "demo",
+        subdomain: 'demo',
       },
       select: {
         subdomain: true,
       },
     }),
-    prisma.site.findMany({
+    prisma.project.findMany({
       where: {
         NOT: {
           customDomain: null,
         },
-        // you can remove this if you want to generate all sites at build time
-        customDomain: "platformize.co",
+        // you can remove this if you want to generate all projects at build time
+        customDomain: 'platformize.co',
       },
       select: {
         customDomain: true,
@@ -156,7 +156,7 @@ export const getStaticPaths: GetStaticPaths<PathProps> = async () => {
   return {
     paths: allPaths.map((path) => ({
       params: {
-        site: path,
+        project: path,
       },
     })),
     fallback: true,
@@ -166,24 +166,24 @@ export const getStaticPaths: GetStaticPaths<PathProps> = async () => {
 export const getStaticProps: GetStaticProps<IndexProps, PathProps> = async ({
   params,
 }) => {
-  if (!params) throw new Error("No path parameters found");
+  if (!params) throw new Error('No path parameters found');
 
-  const { site } = params;
+  const { project } = params;
 
   let filter: {
     subdomain?: string;
     customDomain?: string;
   } = {
-    subdomain: site,
+    subdomain: project,
   };
 
-  if (site.includes(".")) {
+  if (project.includes('.')) {
     filter = {
-      customDomain: site,
+      customDomain: project,
     };
   }
 
-  const data = (await prisma.site.findUnique({
+  const data = (await prisma.project.findUnique({
     where: filter,
     include: {
       user: true,
@@ -193,12 +193,12 @@ export const getStaticProps: GetStaticProps<IndexProps, PathProps> = async ({
         },
         orderBy: [
           {
-            createdAt: "desc",
+            createdAt: 'desc',
           },
         ],
       },
     },
-  })) as _SiteData;
+  })) as _ProjectData;
 
   if (!data) return { notFound: true, revalidate: 10 };
 

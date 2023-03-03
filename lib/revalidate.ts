@@ -2,10 +2,10 @@ import { HttpMethod } from "@/types";
 
 export async function revalidate(
   hostname: string, // hostname to be revalidated
-  siteId: string, // siteId
+  projectId: string, // projectId
   slug: string // slugname for the post
 ) {
-  const urlPaths = [`/_sites/${siteId}/${slug}`, `/_sites/${siteId}`];
+  const urlPaths = [`/_projects/${projectId}/${slug}`, `/_projects/${projectId}`];
 
   // refer to https://solutions-on-demand-isr.vercel.app/ for more info on bulk/batch revalidate
   try {

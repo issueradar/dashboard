@@ -1,59 +1,59 @@
-import { useDebounce } from "use-debounce";
-import { useRouter } from "next/router";
-import { useState, useEffect } from "react";
-import toast, { Toaster } from "react-hot-toast";
-import useSWR, { mutate } from "swr";
+import { useDebounce } from 'use-debounce';
+import { useRouter } from 'next/router';
+import { useState, useEffect } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
+import useSWR, { mutate } from 'swr';
 
-import BlurImage from "@/components/BlurImage";
-import CloudinaryUploadWidget from "@/components/Cloudinary";
-import DomainCard from "@/components/app/DomainCard";
-import Layout from "@/components/app/Layout";
-import LoadingDots from "@/components/app/loading-dots";
-import Modal from "@/components/Modal";
+import BlurImage from '@/components/BlurImage';
+import CloudinaryUploadWidget from '@/components/Cloudinary';
+import DomainCard from '@/components/app/DomainCard';
+import Layout from '@/components/app/Layout';
+import LoadingDots from '@/components/app/loading-dots';
+import Modal from '@/components/Modal';
 
-import { fetcher } from "@/lib/fetcher";
-import { HttpMethod } from "@/types";
+import { fetcher } from '@/lib/fetcher';
+import { HttpMethod } from '@/types';
 
-import type { Site } from "@prisma/client";
+import type { Project } from '@prisma/client';
 
 interface SettingsData
   extends Pick<
-    Site,
-    | "id"
-    | "name"
-    | "description"
-    | "font"
-    | "subdomain"
-    | "customDomain"
-    | "image"
-    | "imageBlurhash"
+    Project,
+    | 'id'
+    | 'name'
+    | 'description'
+    | 'font'
+    | 'subdomain'
+    | 'customDomain'
+    | 'image'
+    | 'imageBlurhash'
   > {}
 
-export default function SiteSettings() {
+export default function ProjectSettings() {
   const router = useRouter();
   const { id } = router.query;
-  const siteId = id;
+  const projectId = id;
 
-  const { data: settings } = useSWR<Site | null>(
-    siteId && `/api/site?siteId=${siteId}`,
+  const { data: settings } = useSWR<Project | null>(
+    projectId && `/api/project?projectId=${projectId}`,
     fetcher,
     {
-      onError: () => router.push("/"),
+      onError: () => router.push('/'),
       revalidateOnFocus: false,
-    }
+    },
   );
 
   const [saving, setSaving] = useState(false);
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<any | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deletingSite, setDeletingSite] = useState(false);
+  const [deletingProject, setDeletingProject] = useState(false);
 
   const [data, setData] = useState<SettingsData>({
-    id: "",
+    id: '',
     name: null,
     description: null,
-    font: "font-cal",
+    font: 'font-cal',
     subdomain: null,
     customDomain: null,
     image: null,
@@ -64,48 +64,48 @@ export default function SiteSettings() {
     if (settings) setData(settings);
   }, [settings]);
 
-  async function saveSiteSettings(data: SettingsData) {
+  async function saveProjectSettings(data: SettingsData) {
     setSaving(true);
 
     try {
-      const response = await fetch("/api/site", {
+      const response = await fetch('/api/project', {
         method: HttpMethod.PUT,
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           currentSubdomain: settings?.subdomain ?? undefined,
           ...data,
-          id: siteId,
+          id: projectId,
         }),
       });
 
       if (response.ok) {
         setSaving(false);
-        mutate(`/api/site?siteId=${siteId}`);
+        mutate(`/api/project?projectId=${projectId}`);
         toast.success(`Changes Saved`);
       }
     } catch (error) {
-      toast.error("Failed to save settings");
+      toast.error('Failed to save settings');
       console.error(error);
     } finally {
       setSaving(false);
     }
   }
 
-  async function deleteSite(siteId: string) {
-    setDeletingSite(true);
+  async function deleteProject(projectId: string) {
+    setDeletingProject(true);
 
     try {
-      const response = await fetch(`/api/site?siteId=${siteId}`, {
+      const response = await fetch(`/api/project?projectId=${projectId}`, {
         method: HttpMethod.DELETE,
       });
 
-      if (response.ok) router.push("/");
+      if (response.ok) router.push('/');
     } catch (error) {
       console.error(error);
     } finally {
-      setDeletingSite(false);
+      setDeletingProject(false);
     }
   }
   const [debouncedSubdomain] = useDebounce(data?.subdomain, 1500);
@@ -115,13 +115,13 @@ export default function SiteSettings() {
     async function checkSubdomain() {
       try {
         const response = await fetch(
-          `/api/domain/check?domain=${debouncedSubdomain}&subdomain=1`
+          `/api/domain/check?domain=${debouncedSubdomain}&subdomain=1`,
         );
 
         const available = await response.json();
 
         setSubdomainError(
-          available ? null : `${debouncedSubdomain}.vercel.pub`
+          available ? null : `${debouncedSubdomain}.vercel.pub`,
         );
       } catch (error) {
         console.error(error);
@@ -143,10 +143,10 @@ export default function SiteSettings() {
 
     try {
       const response = await fetch(
-        `/api/domain?domain=${customDomain}&siteId=${siteId}`,
+        `/api/domain?domain=${customDomain}&projectId=${projectId}`,
         {
           method: HttpMethod.POST,
-        }
+        },
       );
 
       if (!response.ok)
@@ -155,7 +155,7 @@ export default function SiteSettings() {
           domain: customDomain,
         };
       setError(null);
-      mutate(`/api/site?siteId=${siteId}`);
+      mutate(`/api/project?projectId=${projectId}`);
     } catch (error) {
       setError(error);
     } finally {
@@ -172,7 +172,7 @@ export default function SiteSettings() {
         }}
       />
       <div className="max-w-screen-xl mx-auto px-10 sm:px-20 mt-20 mb-16">
-        <h1 className="font-cal text-5xl mb-12">Site Settings</h1>
+        <h1 className="font-cal text-5xl mb-12">Project Settings</h1>
         <div className="mb-28 flex flex-col space-y-12">
           <div className="flex flex-col space-y-6">
             <h2 className="font-cal text-2xl">Name</h2>
@@ -186,9 +186,9 @@ export default function SiteSettings() {
                     name: (e.target as HTMLTextAreaElement).value,
                   }))
                 }
-                placeholder="Untitled Site"
+                placeholder="Untitled Project"
                 type="text"
-                value={data.name || ""}
+                value={data.name || ''}
               />
             </div>
           </div>
@@ -206,7 +206,7 @@ export default function SiteSettings() {
                 }
                 placeholder="Lorem ipsum forem dimsum"
                 rows={3}
-                value={data?.description || ""}
+                value={data?.description || ''}
               />
             </div>
           </div>
@@ -220,7 +220,7 @@ export default function SiteSettings() {
                     font: (e.target as HTMLSelectElement).value,
                   }))
                 }
-                value={data?.font || "font-cal"}
+                value={data?.font || 'font-cal'}
                 className="w-full px-5 py-3 font-cal text-gray-700 bg-white border-none focus:outline-none focus:ring-0 rounded-none placeholder-gray-400"
               >
                 <option value="font-cal">Cal Sans</option>
@@ -243,7 +243,7 @@ export default function SiteSettings() {
                 }
                 placeholder="subdomain"
                 type="text"
-                value={data.subdomain || ""}
+                value={data.subdomain || ''}
               />
               <div className="w-1/2 h-12 flex justify-center items-center font-cal rounded-r-lg border-l border-gray-600 bg-gray-100">
                 vercel.pub
@@ -281,7 +281,7 @@ export default function SiteSettings() {
                     }}
                     pattern="^(?:[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.)?[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$"
                     placeholder="mydomain.com"
-                    value={data.customDomain || ""}
+                    value={data.customDomain || ''}
                     type="text"
                   />
                 </div>
@@ -289,7 +289,7 @@ export default function SiteSettings() {
                   type="submit"
                   className="bg-black text-white border-black hover:text-black hover:bg-white px-5 py-3 w-28 font-cal border-solid border rounded-md focus:outline-none transition-all ease-in-out duration-150"
                 >
-                  {adding ? <LoadingDots /> : "Add"}
+                  {adding ? <LoadingDots /> : 'Add'}
                 </button>
               </form>
             )}
@@ -305,7 +305,7 @@ export default function SiteSettings() {
                   strokeLinejoin="round"
                   fill="none"
                   shapeRendering="geometricPrecision"
-                  style={{ color: "#f44336" }}
+                  style={{ color: '#f44336' }}
                 >
                   <circle cx="12" cy="12" r="10" fill="white" />
                   <path d="M12 8v4" stroke="#f44336" />
@@ -319,15 +319,15 @@ export default function SiteSettings() {
                       onClick={async (e) => {
                         e.preventDefault();
                         await fetch(
-                          `/api/request-delegation?domain=${error.domain}`
+                          `/api/request-delegation?domain=${error.domain}`,
                         ).then((res) => {
                           if (res.ok) {
                             toast.success(
-                              `Requested delegation for ${error.domain}. Try adding the domain again in a few minutes.`
+                              `Requested delegation for ${error.domain}. Try adding the domain again in a few minutes.`,
                             );
                           } else {
                             alert(
-                              "There was an error requesting delegation. Please try again later."
+                              'There was an error requesting delegation. Please try again later.',
                             );
                           }
                         });
@@ -349,7 +349,7 @@ export default function SiteSettings() {
             <h2 className="font-cal text-2xl">Thumbnail Image</h2>
             <div
               className={`${
-                data.image ? "" : "animate-pulse bg-gray-300 h-150"
+                data.image ? '' : 'animate-pulse bg-gray-300 h-150'
               } relative mt-5 w-full border-2 border-gray-800 border-dashed rounded-md`}
             >
               <CloudinaryUploadWidget
@@ -392,9 +392,9 @@ export default function SiteSettings() {
             </div>
             <div className="w-full h-10" />
             <div className="flex flex-col space-y-6 max-w-lg">
-              <h2 className="font-cal text-2xl">Delete Site</h2>
+              <h2 className="font-cal text-2xl">Delete Project</h2>
               <p>
-                Permanently delete your site and all of its contents from our
+                Permanently delete your project and all of its contents from our
                 platform. This action is not reversible – please continue with
                 caution.
               </p>
@@ -404,7 +404,7 @@ export default function SiteSettings() {
                 }}
                 className="bg-red-500 text-white border-red-500 hover:text-red-500 hover:bg-white px-5 py-3 max-w-max font-cal border-solid border rounded-md focus:outline-none transition-all ease-in-out duration-150"
               >
-                Delete Site
+                Delete Project
               </button>
             </div>
           </div>
@@ -414,24 +414,24 @@ export default function SiteSettings() {
         <form
           onSubmit={async (event) => {
             event.preventDefault();
-            await deleteSite(siteId as string);
+            await deleteProject(projectId as string);
           }}
           className="inline-block w-full max-w-md pt-8 overflow-hidden text-center align-middle transition-all bg-white shadow-xl rounded-lg"
         >
-          <h2 className="font-cal text-2xl mb-6">Delete Site</h2>
+          <h2 className="font-cal text-2xl mb-6">Delete Project</h2>
           <div className="grid gap-y-5 w-5/6 mx-auto">
             <p className="text-gray-600 mb-3">
-              Are you sure you want to delete your site? This action is not
-              reversible. Type in the full name of your site (<b>{data.name}</b>
-              ) to confirm.
+              Are you sure you want to delete your project? This action is not
+              reversible. Type in the full name of your project (
+              <b>{data.name}</b>) to confirm.
             </p>
             <div className="border border-gray-700 rounded-lg flex flex-start items-center overflow-hidden">
               <input
                 className="w-full px-5 py-3 text-gray-700 bg-white border-none focus:outline-none focus:ring-0 rounded-none rounded-r-lg placeholder-gray-400"
                 type="text"
                 name="name"
-                placeholder={data.name ?? ""}
-                pattern={data.name ?? "Site Name"}
+                placeholder={data.name ?? ''}
+                pattern={data.name ?? 'Project Name'}
               />
             </div>
           </div>
@@ -446,14 +446,14 @@ export default function SiteSettings() {
 
             <button
               type="submit"
-              disabled={deletingSite}
+              disabled={deletingProject}
               className={`${
-                deletingSite
-                  ? "cursor-not-allowed text-gray-400 bg-gray-50"
-                  : "bg-white text-gray-600 hover:text-black"
+                deletingProject
+                  ? 'cursor-not-allowed text-gray-400 bg-gray-50'
+                  : 'bg-white text-gray-600 hover:text-black'
               } w-full px-5 py-5 text-sm border-t border-l border-gray-300 rounded-br focus:outline-none focus:ring-0 transition-all ease-in-out duration-150`}
             >
-              {deletingSite ? <LoadingDots /> : "DELETE SITE"}
+              {deletingProject ? <LoadingDots /> : 'DELETE PROJECT'}
             </button>
           </div>
         </form>
@@ -463,16 +463,16 @@ export default function SiteSettings() {
         <div className="max-w-screen-xl mx-auto px-10 sm:px-20 h-full flex justify-end items-center">
           <button
             onClick={() => {
-              saveSiteSettings(data);
+              saveProjectSettings(data);
             }}
             disabled={saving || subdomainError !== null}
             className={`${
               saving || subdomainError
-                ? "cursor-not-allowed bg-gray-300 border-gray-300"
-                : "bg-black hover:bg-white hover:text-black border-black"
+                ? 'cursor-not-allowed bg-gray-300 border-gray-300'
+                : 'bg-black hover:bg-white hover:text-black border-black'
             } mx-2 rounded-md w-36 h-12 text-lg text-white border-2 focus:outline-none transition-all ease-in-out duration-150`}
           >
-            {saving ? <LoadingDots /> : "Save Changes"}
+            {saving ? <LoadingDots /> : 'Save Changes'}
           </button>
         </div>
       </footer>
