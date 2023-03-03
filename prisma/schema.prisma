@@ -89,7 +89,7 @@ model Post {
 model Project {
   id            String   @id @default(cuid())
   name          String?
-  repoUrl       String?  @db.Text
+  repoUrl       String?
   description   String?  @db.Text
   logo          String?
   font          String   @default("font-cal")

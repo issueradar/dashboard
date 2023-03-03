@@ -1,14 +1,14 @@
-import Layout from "@/components/app/Layout";
-import toast, { Toaster } from "react-hot-toast";
-import BlurImage from "@/components/BlurImage";
-import CloudinaryUploadWidget from "@/components/Cloudinary";
-import LoadingDots from "@/components/app/loading-dots";
-import { HttpMethod } from "@/types";
+import Layout from '@/components/app/Layout';
+import toast, { Toaster } from 'react-hot-toast';
+import BlurImage from '@/components/BlurImage';
+import CloudinaryUploadWidget from '@/components/Cloudinary';
+import LoadingDots from '@/components/app/loading-dots';
+import { HttpMethod } from '@/types';
 
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 
-import type { UserSettings } from "@/types";
+import type { UserSettings } from '@/types';
 
 export default function AppSettings() {
   const { data: session } = useSession();
@@ -25,7 +25,7 @@ export default function AppSettings() {
 
   async function saveSettings(data: UserSettings | null) {
     setSaving(true);
-    const response = await fetch("/api/save-settings", {
+    const response = await fetch('/api/save-settings', {
       method: HttpMethod.POST,
       body: JSON.stringify({
         ...data,
@@ -47,7 +47,7 @@ export default function AppSettings() {
           }}
         />
         <div className="max-w-screen-xl mx-auto px-10 sm:px-20 mt-10 mb-16">
-          <h1 className="font-cal text-5xl mb-12">Settings</h1>
+          <h1 className="font-cal text-5xl mb-12">Profile Settings</h1>
           <div className="mb-28 flex flex-col space-y-12">
             <div className="space-y-6">
               <h2 className="font-cal text-2xl">Name</h2>
@@ -57,7 +57,7 @@ export default function AppSettings() {
                   type="text"
                   name="name"
                   placeholder="Your awesome name"
-                  value={data?.name || ""}
+                  value={data?.name || ''}
                   onInput={(e) =>
                     setData({
                       ...data,
@@ -75,7 +75,7 @@ export default function AppSettings() {
                   type="email"
                   name="email"
                   placeholder="panic@thedis.co"
-                  value={data?.email || ""}
+                  value={data?.email || ''}
                   onInput={(e) =>
                     setData({
                       ...data,
@@ -89,7 +89,7 @@ export default function AppSettings() {
               <h2 className="font-cal text-2xl">Display Picture</h2>
               <div
                 className={`${
-                  data?.image ? "" : "animate-pulse bg-gray-300 h-150"
+                  data?.image ? '' : 'animate-pulse bg-gray-300 h-150'
                 } relative mt-5 w-48 border-2 border-gray-800 border-dashed rounded-md`}
               >
                 <CloudinaryUploadWidget
@@ -140,11 +140,11 @@ export default function AppSettings() {
               disabled={saving}
               className={`${
                 saving
-                  ? "cursor-not-allowed bg-gray-300 border-gray-300"
-                  : "bg-black hover:bg-white hover:text-black border-black"
+                  ? 'cursor-not-allowed bg-gray-300 border-gray-300'
+                  : 'bg-black hover:bg-white hover:text-black border-black'
               } mx-2 w-36 h-12 text-lg text-white border-2 focus:outline-none transition-all ease-in-out duration-150`}
             >
-              {saving ? <LoadingDots /> : "Save Changes"}
+              {saving ? <LoadingDots /> : 'Save Changes'}
             </button>
           </div>
         </footer>

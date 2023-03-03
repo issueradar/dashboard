@@ -197,15 +197,7 @@ export async function updateProject(
   const session = await unstable_getServerSession(req, res, authOptions);
   if (!session?.user.id) return res.status(401).end('Unauthorized');
 
-  const {
-    id,
-    currentSubdomain,
-    name,
-    description,
-    font,
-    image,
-    imageBlurhash,
-  } = req.body;
+  const { id, currentSubdomain, ...rest } = req.body;
 
   if (!id || typeof id !== 'string') {
     return res
@@ -232,12 +224,8 @@ export async function updateProject(
         id: id,
       },
       data: {
-        name,
-        description,
-        font,
         subdomain,
-        image,
-        imageBlurhash,
+        ...rest,
       },
     });
 

@@ -245,8 +245,6 @@ export const getStaticProps: GetStaticProps<PostProps, PathProps> = async ({
     },
   })) as _ProjectSlugData | null;
 
-  // console.log(data);
-
   if (!data) return { notFound: true, revalidate: 10 };
 
   const [mdxSource, adjacentPosts] = await Promise.all([

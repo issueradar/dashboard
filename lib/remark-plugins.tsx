@@ -1,12 +1,12 @@
-import Link from "next/link";
-import { visit } from "unist-util-visit";
+import Link from 'next/link';
+import { visit } from 'unist-util-visit';
 
-import { getTweets } from "@/lib/twitter";
+import { getTweets } from '@/lib/twitter';
 
-import type { Literal, Node } from "unist";
-import type { Example, PrismaClient } from "@prisma/client";
+import type { Literal, Node } from 'unist';
+import type { Example, PrismaClient } from '@prisma/client';
 
-import type { WithChildren } from "@/types";
+import type { WithChildren } from '@/types';
 
 interface NodesToChange {
   node: Node;
@@ -16,7 +16,7 @@ export function replaceLinks(options: { href?: string } & WithChildren) {
   // this is technically not a remark plugin but it
   // replaces internal links with <Link /> component
   // and external links with <a target="_blank" />
-  return options.href?.startsWith("/") || options.href === "" ? (
+  return options.href?.startsWith('/') || options.href === '' ? (
     <Link href={options.href} className="cursor-pointer">
       {options.children}
     </Link>
@@ -32,10 +32,10 @@ export function replaceTweets<T extends Node>() {
     new Promise<void>(async (resolve, reject) => {
       const nodesToChange = new Array<NodesToChange>();
 
-      visit(tree, "text", (node: any) => {
+      visit(tree, 'text', (node: any) => {
         if (
           node.value.match(
-            /https?:\/\/twitter\.com\/(?:#!\/)?(\w+)\/status(?:es)?\/(\d+)([^\?])(\?.*)?/g
+            /https?:\/\/twitter\.com\/(?:#!\/)?(\w+)\/status(?:es)?\/(\d+)([^\?])(\?.*)?/g,
           )
         ) {
           nodesToChange.push({
@@ -47,24 +47,24 @@ export function replaceTweets<T extends Node>() {
         try {
           const data = await getTweet(node as Literal<string>);
 
-          node.type = "mdxJsxFlowElement";
+          node.type = 'mdxJsxFlowElement';
           // @ts-expect-error - Node is a generic type, but we are creating a JSX node here
-          node.name = "Tweet";
+          node.name = 'Tweet';
           // @ts-expect-error - Node is a generic type, but we are creating a JSX node here
           node.attributes = [
             {
-              type: "mdxJsxAttribute",
-              name: "id",
+              type: 'mdxJsxAttribute',
+              name: 'id',
               value: data.id,
             },
             {
-              type: "mdxJsxAttribute",
-              name: "metadata",
+              type: 'mdxJsxAttribute',
+              name: 'metadata',
               value: data.metadata,
             },
           ];
         } catch (e) {
-          console.log("ERROR", e);
+          console.error('ERROR', e);
           return reject(e);
         }
       }
@@ -84,7 +84,7 @@ async function getTweet(node: Literal<string>) {
   try {
     tweetData = await getTweets(id);
   } catch (e) {
-    console.log("ERROR", e);
+    console.error('ERROR', e);
   }
   return {
     id,
@@ -97,8 +97,8 @@ export function replaceExamples<T extends Node>(prisma: PrismaClient) {
     new Promise<void>(async (resolve, reject) => {
       const nodesToChange = new Array<NodesToChange>();
 
-      visit(tree, "mdxJsxFlowElement", (node: any) => {
-        if (node.name == "Examples") {
+      visit(tree, 'mdxJsxFlowElement', (node: any) => {
+        if (node.name == 'Examples') {
           nodesToChange.push({
             node,
           });
@@ -110,8 +110,8 @@ export function replaceExamples<T extends Node>(prisma: PrismaClient) {
           // @ts-expect-error - Node is a generic type, but we are creating a JSX node here
           node.attributes = [
             {
-              type: "mdxJsxAttribute",
-              name: "data",
+              type: 'mdxJsxAttribute',
+              name: 'data',
               value: data,
             },
           ];
@@ -125,7 +125,7 @@ export function replaceExamples<T extends Node>(prisma: PrismaClient) {
 }
 
 async function getExamples(node: any, prisma: PrismaClient) {
-  const names = node?.attributes[0].value.split(",");
+  const names = node?.attributes[0].value.split(',');
 
   const data = new Array<Example | null>();
 

@@ -16,18 +16,18 @@ import { HttpMethod } from '@/types';
 
 import type { Project } from '@prisma/client';
 
-interface SettingsData
-  extends Pick<
-    Project,
-    | 'id'
-    | 'name'
-    | 'description'
-    | 'font'
-    | 'subdomain'
-    | 'customDomain'
-    | 'image'
-    | 'imageBlurhash'
-  > {}
+type SettingsData = Pick<
+  Project,
+  | 'id'
+  | 'name'
+  | 'repoUrl'
+  | 'description'
+  | 'font'
+  | 'subdomain'
+  | 'customDomain'
+  | 'image'
+  | 'imageBlurhash'
+>;
 
 export default function ProjectSettings() {
   const router = useRouter();
@@ -45,13 +45,14 @@ export default function ProjectSettings() {
 
   const [saving, setSaving] = useState(false);
   const [adding, setAdding] = useState(false);
-  const [error, setError] = useState<any | null>(null);
+  const [error, setError] = useState<unknown | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingProject, setDeletingProject] = useState(false);
 
   const [data, setData] = useState<SettingsData>({
     id: '',
     name: null,
+    repoUrl: null,
     description: null,
     font: 'font-cal',
     subdomain: null,
@@ -64,7 +65,7 @@ export default function ProjectSettings() {
     if (settings) setData(settings);
   }, [settings]);
 
-  async function saveProjectSettings(data: SettingsData) {
+  async function saveProjectSettings(input: SettingsData) {
     setSaving(true);
 
     try {
@@ -75,7 +76,7 @@ export default function ProjectSettings() {
         },
         body: JSON.stringify({
           currentSubdomain: settings?.subdomain ?? undefined,
-          ...data,
+          ...input,
           id: projectId,
         }),
       });
@@ -189,6 +190,24 @@ export default function ProjectSettings() {
                 placeholder="Untitled Project"
                 type="text"
                 value={data.name || ''}
+              />
+            </div>
+          </div>
+          <div className="flex flex-col space-y-6">
+            <h2 className="font-cal text-2xl">Repo URL</h2>
+            <div className="border border-gray-700 rounded-lg overflow-hidden flex items-center max-w-lg">
+              <input
+                className="w-full px-5 py-3 font-cal text-gray-700 bg-white border-none focus:outline-none focus:ring-0 rounded-none placeholder-gray-400"
+                name="repoUrl"
+                onInput={(e) =>
+                  setData((d) => ({
+                    ...d,
+                    repoUrl: (e.target as HTMLTextAreaElement).value,
+                  }))
+                }
+                placeholder="Untitled Repo URL"
+                type="text"
+                value={data.repoUrl || ''}
               />
             </div>
           </div>
