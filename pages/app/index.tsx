@@ -11,7 +11,6 @@ import { useDebounce } from 'use-debounce';
 import { fetcher } from '@/lib/fetcher';
 import { HttpMethod } from '@/types';
 
-// import type { FormEvent } from 'react';
 import type { Project } from '@prisma/client';
 
 export default function AppIndex() {
@@ -23,6 +22,7 @@ export default function AppIndex() {
 
   const projectNameRef = useRef<HTMLInputElement | null>(null);
   const projectSubdomainRef = useRef<HTMLInputElement | null>(null);
+  const projectRepoUrlRef = useRef<HTMLInputElement | null>(null);
   const projectDescriptionRef = useRef<HTMLTextAreaElement | null>(null);
 
   useEffect(() => {
@@ -61,6 +61,7 @@ export default function AppIndex() {
       body: JSON.stringify({
         userId: sessionId,
         name: projectNameRef.current?.value,
+        repoUrl: projectRepoUrlRef.current?.value,
         subdomain: projectSubdomainRef.current?.value,
         description: projectDescriptionRef.current?.value,
       }),
@@ -118,6 +119,17 @@ export default function AppIndex() {
                 subdomain.
               </p>
             )}
+            <div className="border border-gray-700 rounded-lg flex flex-start items-center">
+              <span className="pl-5 pr-1">🔗</span>
+              <input
+                className="w-full px-5 py-3 text-gray-700 bg-white border-none focus:outline-none focus:ring-0 rounded-none rounded-r-lg placeholder-gray-400"
+                name="repoUrl"
+                required
+                placeholder="Repo URL"
+                ref={projectRepoUrlRef}
+                type="text"
+              />
+            </div>
             <div className="border border-gray-700 rounded-lg flex flex-start items-top">
               <span className="pl-5 pr-1 mt-3">✍️</span>
               <textarea
