@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/router';
-import { Button, Divider, Flex, Text } from '@chakra-ui/react';
+import { Button, Box, Divider, Flex, Text } from '@chakra-ui/react';
 import { Image, Link } from '@/components';
 import useRequireAuth from '@/lib/useRequireAuth';
 import Loader from './Loader';
@@ -207,7 +207,7 @@ export default function Layout({ projectId, children }: LayoutProps) {
           </div>
         </div>
       )}
-      <div className="pt-28">{children}</div>
+      <Box paddingTop={10}>{children}</Box>
     </>
   );
 }

@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import useSWR from 'swr';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
@@ -6,6 +5,8 @@ import { useState } from 'react';
 import BlurImage from '@/components/BlurImage';
 import Layout from '@/components/app/Layout';
 import LoadingDots from '@/components/app/loading-dots';
+import { Link } from '@/components';
+import { Button, Flex, Text } from '@chakra-ui/react';
 import { fetcher } from '@/lib/fetcher';
 import { HttpMethod } from '@/types';
 
@@ -50,30 +51,23 @@ export default function ProjectIndex() {
 
   return (
     <Layout>
-      <div className="py-20 max-w-screen-xl mx-auto px-10 sm:px-20">
+      <Flex direction="column" paddingX={10}>
         <div className="flex flex-col sm:flex-row space-y-5 sm:space-y-0 justify-between items-center">
-          <h1 className="font-cal text-5xl">
-            Posts for {data ? data?.project?.name : '...'}
-          </h1>
-          <button
+          <Text as="h1" fontSize="4xl" fontWeight="bold">
+            {data ? data?.project?.name : '...'}
+          </Text>
+          <Button
+            colorScheme="green"
+            disabled={creatingPost}
+            isLoading={creatingPost}
+            spinner={<LoadingDots />}
             onClick={() => {
               setCreatingPost(true);
               createPost(projectId as string);
             }}
-            className={`${
-              creatingPost
-                ? 'cursor-not-allowed bg-gray-300 border-gray-300'
-                : 'text-white bg-black hover:bg-white hover:text-black border-black'
-            } font-cal text-lg w-3/4 sm:w-40 tracking-wide border-2 px-5 py-3 transition-all ease-in-out duration-150`}
           >
-            {creatingPost ? (
-              <LoadingDots />
-            ) : (
-              <>
-                New Post <span className="ml-2">＋</span>
-              </>
-            )}
-          </button>
+            New Post
+          </Button>
         </div>
         <div className="my-10 grid gap-y-10">
           {data ? (
@@ -149,7 +143,7 @@ export default function ProjectIndex() {
             ))
           )}
         </div>
-      </div>
+      </Flex>
     </Layout>
   );
 }
