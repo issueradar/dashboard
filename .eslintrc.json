@@ -19,7 +19,7 @@
     "no-console": [
       "warn",
       {
-        "allow": ["info"]
+        "allow": ["info", "error"]
       }
     ],
     "indent": "off",

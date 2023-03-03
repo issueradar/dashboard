@@ -1,15 +1,15 @@
-import { useRouter } from "next/router";
-import { useState } from "react";
-import Link from "next/link";
-import useSWR from "swr";
+import { useRouter } from 'next/router';
+import { useState } from 'react';
+import Link from 'next/link';
+import useSWR from 'swr';
 
-import BlurImage from "@/components/BlurImage";
-import Layout from "@/components/app/Layout";
-import LoadingDots from "@/components/app/loading-dots";
-import { fetcher } from "@/lib/fetcher";
-import { HttpMethod } from "@/types";
+import BlurImage from '@/components/BlurImage';
+import Layout from '@/components/app/Layout';
+import LoadingDots from '@/components/app/loading-dots';
+import { fetcher } from '@/lib/fetcher';
+import { HttpMethod } from '@/types';
 
-import type { Post, Site } from "@prisma/client";
+import type { Post, Site } from '@prisma/client';
 
 interface SitePostData {
   posts: Array<Post>;
@@ -26,8 +26,8 @@ export default function SiteIndex() {
     siteId && `/api/post?siteId=${siteId}&published=true`,
     fetcher,
     {
-      onSuccess: (data) => !data?.site && router.push("/"),
-    }
+      onSuccess: (data) => !data?.site && router.push('/'),
+    },
   );
 
   async function createPost(siteId: string) {
@@ -35,7 +35,7 @@ export default function SiteIndex() {
       const res = await fetch(`/api/post?siteId=${siteId}`, {
         method: HttpMethod.POST,
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
       });
 
@@ -53,7 +53,7 @@ export default function SiteIndex() {
       <div className="py-20 max-w-screen-xl mx-auto px-10 sm:px-20">
         <div className="flex flex-col sm:flex-row space-y-5 sm:space-y-0 justify-between items-center">
           <h1 className="font-cal text-5xl">
-            Posts for {data ? data?.site?.name : "..."}
+            Posts for {data ? data?.site?.name : '...'}
           </h1>
           <button
             onClick={() => {
@@ -62,8 +62,8 @@ export default function SiteIndex() {
             }}
             className={`${
               creatingPost
-                ? "cursor-not-allowed bg-gray-300 border-gray-300"
-                : "text-white bg-black hover:bg-white hover:text-black border-black"
+                ? 'cursor-not-allowed bg-gray-300 border-gray-300'
+                : 'text-white bg-black hover:bg-white hover:text-black border-black'
             } font-cal text-lg w-3/4 sm:w-40 tracking-wide border-2 px-5 py-3 transition-all ease-in-out duration-150`}
           >
             {creatingPost ? (
@@ -84,7 +84,7 @@ export default function SiteIndex() {
                     <div className="relative w-full h-60 md:h-auto md:w-1/3 md:flex-none">
                       {post.image ? (
                         <BlurImage
-                          alt={post.title ?? "Unknown Thumbnail"}
+                          alt={post.title ?? 'Unknown Thumbnail'}
                           width={500}
                           height={400}
                           className="h-full object-cover"
