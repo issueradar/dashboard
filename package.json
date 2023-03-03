@@ -16,6 +16,7 @@
     "node": ">=14.0.0"
   },
   "dependencies": {
+    "@chakra-ui/next-js": "2.0.1",
     "@chakra-ui/react": "2.5.1",
     "@emotion/react": "11.10.6",
     "@emotion/styled": "11.10.6",
