@@ -1,14 +1,14 @@
-import prisma from "@/lib/prisma";
+import prisma from '@/lib/prisma';
 
-import { NextApiRequest, NextApiResponse } from "next";
-import { unstable_getServerSession } from "next-auth/next";
-import { authOptions } from "pages/api/auth/[...nextauth]";
-import type { Post, Project } from ".prisma/client";
-import type { Session } from "next-auth";
-import { revalidate } from "@/lib/revalidate";
-import { getBlurDataURL, placeholderBlurhash } from "@/lib/utils";
+import { NextApiRequest, NextApiResponse } from 'next';
+// import { unstable_getServerSession } from 'next-auth/next';
+// import { authOptions } from 'pages/api/auth/[...nextauth]';
+import type { Post, Project } from '.prisma/client';
+import type { Session } from 'next-auth';
+import { revalidate } from '@/lib/revalidate';
+import { getBlurDataURL, placeholderBlurhash } from '@/lib/utils';
 
-import type { WithProjectPost } from "@/types";
+import type { WithProjectPost } from '@/types';
 
 interface AllPosts {
   posts: Array<Post>;
@@ -28,7 +28,7 @@ interface AllPosts {
 export async function getPost(
   req: NextApiRequest,
   res: NextApiResponse,
-  session: Session
+  session: Session,
 ): Promise<void | NextApiResponse<AllPosts | (WithProjectPost | null)>> {
   const { postId, projectId, published } = req.query;
 
@@ -38,7 +38,7 @@ export async function getPost(
     Array.isArray(published) ||
     !session.user.id
   )
-    return res.status(400).end("Bad request. Query parameters are not valid.");
+    return res.status(400).end('Bad request. Query parameters are not valid.');
 
   try {
     if (postId) {
@@ -75,10 +75,10 @@ export async function getPost(
             project: {
               id: projectId,
             },
-            published: JSON.parse(published || "true"),
+            published: JSON.parse(published || 'true'),
           },
           orderBy: {
-            createdAt: "desc",
+            createdAt: 'desc',
           },
         });
 
@@ -105,16 +105,16 @@ export async function getPost(
 export async function createPost(
   req: NextApiRequest,
   res: NextApiResponse,
-  session: Session
+  session: Session,
 ): Promise<void | NextApiResponse<{
   postId: string;
 }>> {
   const { projectId } = req.query;
 
-  if (!projectId || typeof projectId !== "string" || !session?.user?.id) {
+  if (!projectId || typeof projectId !== 'string' || !session?.user?.id) {
     return res
       .status(400)
-      .json({ error: "Missing or misconfigured project ID or session ID" });
+      .json({ error: 'Missing or misconfigured project ID or session ID' });
   }
 
   const project = await prisma.project.findFirst({
@@ -125,7 +125,7 @@ export async function createPost(
       },
     },
   });
-  if (!project) return res.status(404).end("Project not found");
+  if (!project) return res.status(404).end('Project not found');
 
   try {
     const response = await prisma.post.create({
@@ -161,14 +161,14 @@ export async function createPost(
 export async function deletePost(
   req: NextApiRequest,
   res: NextApiResponse,
-  session: Session
+  session: Session,
 ): Promise<void | NextApiResponse> {
   const { postId } = req.query;
 
-  if (!postId || typeof postId !== "string" || !session?.user?.id) {
+  if (!postId || typeof postId !== 'string' || !session?.user?.id) {
     return res
       .status(400)
-      .json({ error: "Missing or misconfigured project ID or session ID" });
+      .json({ error: 'Missing or misconfigured project ID or session ID' });
   }
 
   const project = await prisma.project.findFirst({
@@ -183,7 +183,7 @@ export async function deletePost(
       },
     },
   });
-  if (!project) return res.status(404).end("Project not found");
+  if (!project) return res.status(404).end('Project not found');
 
   try {
     const response = await prisma.post.delete({
@@ -201,7 +201,7 @@ export async function deletePost(
       await revalidate(
         `https://${response.project?.subdomain}.vercel.pub`, // hostname to be revalidated
         response.project.subdomain, // projectId
-        response.slug // slugname for the post
+        response.slug, // slugname for the post
       );
     }
     if (response?.project?.customDomain)
@@ -209,7 +209,7 @@ export async function deletePost(
       await revalidate(
         `https://${response.project.customDomain}`, // hostname to be revalidated
         response.project.customDomain, // projectId
-        response.slug // slugname for the post
+        response.slug, // slugname for the post
       );
 
     return res.status(200).end();
@@ -239,7 +239,7 @@ export async function deletePost(
 export async function updatePost(
   req: NextApiRequest,
   res: NextApiResponse,
-  session: Session
+  session: Session,
 ): Promise<void | NextApiResponse<Post>> {
   const {
     id,
@@ -253,10 +253,10 @@ export async function updatePost(
     customDomain,
   } = req.body;
 
-  if (!id || typeof id !== "string" || !session?.user?.id) {
+  if (!id || typeof id !== 'string' || !session?.user?.id) {
     return res
       .status(400)
-      .json({ error: "Missing or misconfigured project ID or session ID" });
+      .json({ error: 'Missing or misconfigured project ID or session ID' });
   }
 
   const project = await prisma.project.findFirst({
@@ -271,7 +271,7 @@ export async function updatePost(
       },
     },
   });
-  if (!project) return res.status(404).end("Project not found");
+  if (!project) return res.status(404).end('Project not found');
 
   try {
     const post = await prisma.post.update({
@@ -293,7 +293,7 @@ export async function updatePost(
       await revalidate(
         `https://${subdomain}.vercel.pub`, // hostname to be revalidated
         subdomain, // projectId
-        slug // slugname for the post
+        slug, // slugname for the post
       );
     }
     if (customDomain)
@@ -301,7 +301,7 @@ export async function updatePost(
       await revalidate(
         `https://${customDomain}`, // hostname to be revalidated
         customDomain, // projectId
-        slug // slugname for the post
+        slug, // slugname for the post
       );
 
     return res.status(200).json(post);

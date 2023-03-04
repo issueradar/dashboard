@@ -1,7 +1,7 @@
-import prisma from "@/lib/prisma";
-import { HttpMethod } from "@/types";
+import prisma from '@/lib/prisma';
+import { HttpMethod } from '@/types';
 
-import type { NextApiRequest, NextApiResponse } from "next";
+import type { NextApiRequest, NextApiResponse } from 'next';
 
 /**
  * Add Domain
@@ -14,12 +14,12 @@ import type { NextApiRequest, NextApiResponse } from "next";
  */
 export async function createDomain(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ): Promise<void | NextApiResponse> {
   const { domain, projectId } = req.query;
 
   if (Array.isArray(domain) || Array.isArray(projectId))
-    return res.status(400).end("Bad request. Query parameters are not valid.");
+    return res.status(400).end('Bad request. Query parameters are not valid.');
 
   try {
     const response = await fetch(
@@ -28,19 +28,19 @@ export async function createDomain(
         body: `{\n  "name": "${domain}"\n}`,
         headers: {
           Authorization: `Bearer ${process.env.AUTH_BEARER_TOKEN}`,
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         method: HttpMethod.POST,
-      }
+      },
     );
 
     const data = await response.json();
 
     // Domain is already owned by another team but you can request delegation to access it
-    if (data.error?.code === "forbidden") return res.status(403).end();
+    if (data.error?.code === 'forbidden') return res.status(403).end();
 
     // Domain is already being used by a different project
-    if (data.error?.code === "domain_taken") return res.status(409).end();
+    if (data.error?.code === 'domain_taken') return res.status(409).end();
 
     // Domain is successfully added
     await prisma.project.update({
@@ -70,12 +70,12 @@ export async function createDomain(
  */
 export async function deleteDomain(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse,
 ): Promise<void | NextApiResponse> {
   const { domain, projectId } = req.query;
 
   if (Array.isArray(domain) || Array.isArray(projectId))
-    res.status(400).end("Bad request. Query parameters cannot be an array.");
+    res.status(400).end('Bad request. Query parameters cannot be an array.');
 
   try {
     const response = await fetch(
@@ -85,7 +85,7 @@ export async function deleteDomain(
           Authorization: `Bearer ${process.env.AUTH_BEARER_TOKEN}`,
         },
         method: HttpMethod.DELETE,
-      }
+      },
     );
 
     await response.json();
