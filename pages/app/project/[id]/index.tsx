@@ -1,16 +1,17 @@
 import useSWR from 'swr';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
-
-import BlurImage from '@/components/BlurImage';
-import Layout from '@/components/app/Layout';
-import LoadingDots from '@/components/app/loading-dots';
-import { Link } from '@/components';
 import { Button, Flex, Text } from '@chakra-ui/react';
+import { RepeatIcon } from '@chakra-ui/icons';
+import Layout from '@/components/app/Layout';
+import { Link } from '@/components';
 import { fetcher } from '@/lib/fetcher';
-import { HttpMethod } from '@/types';
+import { HttpMethod, Message, CreateChatCompletionResponse } from '@/types';
 
 import type { Post, Project } from '@prisma/client';
+
+// eslint-disable-next-line
+type UnknownData = Record<string, any>;
 
 interface ProjectPostData {
   posts: Array<Post>;
@@ -18,7 +19,13 @@ interface ProjectPostData {
 }
 
 export default function ProjectIndex() {
-  const [creatingPost, setCreatingPost] = useState(false);
+  const [isLoading, setLoading] = useState(false);
+  const [currentTask, setCurrentTask] = useState('');
+  const [page, setPage] = useState(1);
+  const [issues, setIssues] = useState<UnknownData[]>([]);
+  const [answers, setAnswers] = useState<
+    CreateChatCompletionResponse['choices']
+  >([]);
 
   const router = useRouter();
   const { id: projectId } = router.query;
@@ -31,22 +38,90 @@ export default function ProjectIndex() {
     },
   );
 
-  async function createPost(projectId: string) {
+  const getIssues = async (p: number) => {
     try {
-      const res = await fetch(`/api/post?projectId=${projectId}`, {
-        method: HttpMethod.POST,
-        headers: {
-          'Content-Type': 'application/json',
+      setLoading(true);
+      setCurrentTask('Getting issues...');
+
+      const res = await fetch(
+        `https://api.github.com/repos/pmndrs/jotai/issues?page=${p}&state=all`,
+        {
+          method: HttpMethod.GET,
+          headers: {
+            'Content-Type': 'application/json',
+          },
         },
-      });
+      );
 
       if (res.ok) {
-        const data = await res.json();
-        router.push(`/post/${data.postId}`);
+        const responseData = await res.json();
+        return responseData;
       }
     } catch (error) {
       console.error(error);
     }
+  };
+
+  const askGPT = async (
+    messages: Message[],
+  ): Promise<CreateChatCompletionResponse | undefined> => {
+    try {
+      setLoading(true);
+      setCurrentTask('Asking AI...');
+
+      const res = await fetch('/api/analyse', {
+        method: HttpMethod.POST,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(messages),
+      });
+
+      if (res.ok) {
+        const responseData = await res.json();
+        return responseData;
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  async function handleButtonClick() {
+    setLoading(true);
+    const newData = [];
+    for (let p = 1; p <= 1; p++) {
+      await new Promise((r) => setTimeout(r, 500));
+      const data = await getIssues(p);
+      newData.push(...data);
+      setPage(p);
+      setCurrentTask(`Getting issues... (${page})`);
+    }
+    setIssues(newData);
+    const messages: Message[] = [
+      {
+        role: 'system',
+        content:
+          'You are a senior and helpful technical analyst. You will read a given GitHub issue contents and summary it later',
+      },
+      ...newData.map<Message>((issue) => {
+        const content = `${issue.title} ${issue.body}`;
+        return {
+          role: 'assistant',
+          content,
+        };
+      }),
+      {
+        role: 'user',
+        content:
+          'Write the summary of all given issues into one condensed paragraph',
+      },
+    ];
+    const res = await askGPT(messages);
+    if (res && res.choices) {
+      setAnswers(res.choices);
+    }
+    setLoading(false);
+    setCurrentTask('');
   }
 
   return (
@@ -58,54 +133,38 @@ export default function ProjectIndex() {
           </Text>
           <Button
             colorScheme="green"
-            disabled={creatingPost}
-            isLoading={creatingPost}
-            spinner={<LoadingDots />}
-            onClick={() => {
-              setCreatingPost(true);
-              createPost(projectId as string);
-            }}
+            disabled={isLoading}
+            isLoading={isLoading}
+            leftIcon={<RepeatIcon />}
+            loadingText={currentTask}
+            onClick={handleButtonClick}
           >
-            New Post
+            Update
           </Button>
         </div>
+        {answers.length > 0 &&
+          answers.map((answer, index) => (
+            <Flex
+              key={`answer-${index}`}
+              padding={2}
+              border="1px"
+              borderColor="green.400"
+            >
+              <Text>{answer?.message?.content}</Text>
+            </Flex>
+          ))}
         <div className="my-10 grid gap-y-10">
-          {data ? (
-            data.posts.length > 0 ? (
-              data.posts.map((post) => (
-                <Link href={`/post/${post.id}`} key={post.id}>
-                  <div className="flex flex-col md:flex-row md:h-60 rounded-lg overflow-hidden border border-gray-200">
-                    <div className="relative w-full h-60 md:h-auto md:w-1/3 md:flex-none">
-                      {post.image ? (
-                        <BlurImage
-                          alt={post.title ?? 'Unknown Thumbnail'}
-                          width={500}
-                          height={400}
-                          className="h-full object-cover"
-                          src={post.image}
-                        />
-                      ) : (
-                        <div className="absolute flex items-center justify-center w-full h-full bg-gray-100 text-gray-500 text-4xl">
-                          ?
-                        </div>
-                      )}
-                    </div>
-                    <div className="relative p-10">
-                      <h2 className="font-cal text-3xl">{post.title}</h2>
-                      <p className="text-base my-5 line-clamp-3">
-                        {post.description}
-                      </p>
-                      <a
-                        className="font-cal px-3 py-1 tracking-wide rounded bg-gray-200 text-gray-600 absolute bottom-5 left-10 whitespace-nowrap"
-                        href={`https://${data.project?.subdomain}.vercel.pub/${post.slug}`}
-                        onClick={(e) => e.stopPropagation()}
-                        rel="noreferrer"
-                        target="_blank"
-                      >
-                        {data.project?.subdomain}.vercel.pub/{post.slug} ↗
-                      </a>
-                    </div>
-                  </div>
+          {issues ? (
+            issues.length > 0 ? (
+              issues.map((issue, index) => (
+                <Link href={`/issue/${issue.id}`} key={issue.id}>
+                  <Flex alignItems="center" maxWidth="100vw">
+                    <Flex maxWidth="100%">{index + 1}</Flex>
+                    <Flex padding={3} direction="column">
+                      <h2 className="font-cal text-xl">{issue.title}</h2>
+                      <Text noOfLines={3}>{issue.body}</Text>
+                    </Flex>
+                  </Flex>
                 </Link>
               ))
             ) : (
@@ -121,7 +180,8 @@ export default function ProjectIndex() {
                 </div>
                 <div className="text-center">
                   <p className="text-2xl font-cal text-gray-600">
-                    No posts yet. Click &quot;New Post&quot; to create one.
+                    No issues yet. Click &quot;Update&quot; to get it from
+                    GitHub.
                   </p>
                 </div>
               </>
