@@ -4,6 +4,11 @@ export type ParserReturn = {
   provider: 'GITHUB' | 'GITLAB';
 };
 
+/*
+ * Parse a git url to get user, repo and provider
+ * @function repoUrlParser
+ * @param {string} input The git url to parse, accepts HTTPS and SSH
+ */
 export const repoUrlParser = (input = '') => {
   const link = input.trim();
 
@@ -13,6 +18,8 @@ export const repoUrlParser = (input = '') => {
     provider: 'GITHUB',
   };
 
+  // TODO: Add more checking to clean unnecessary long urls
+  // e.g. https://github.com/vercel/next.js/tree/canary/examples/
   if (link.search('github.com') !== -1) {
     const cleaned = link
       .replace('https://', '')
@@ -40,7 +47,7 @@ export const repoUrlParser = (input = '') => {
       provider: 'GITLAB',
     };
   } else {
-    throw new Error('Accept only GitHub or GitLab repo URL');
+    throw new Error('Currently accepts only GitHub or GitLab repo URL');
   }
 
   return result;
