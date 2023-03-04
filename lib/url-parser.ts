@@ -1,7 +1,13 @@
-export type ParserReturn = {
+export type ParserResult = {
   repo: string;
   user: string;
-  provider: 'GITHUB' | 'GITLAB';
+  provider: 'GITHUB' | 'GITLAB' | 'UNKNOWN';
+};
+
+export const initial: ParserResult = {
+  repo: '',
+  user: '',
+  provider: 'UNKNOWN',
 };
 
 /*
@@ -9,22 +15,19 @@ export type ParserReturn = {
  * @function repoUrlParser
  * @param {string} input The git url to parse, accepts HTTPS and SSH
  */
-export const repoUrlParser = (input = '') => {
-  const link = input.trim();
+export const repoUrlParser = (input = ''): ParserResult => {
+  const link = input.trim().replace('https://', '').replace('.git', '');
 
-  let result: ParserReturn = {
-    repo: '',
-    user: '',
-    provider: 'GITHUB',
-  };
+  let result: ParserResult = initial;
 
-  // TODO: Add more checking to clean unnecessary long urls
+  // TODO: Add more checking to clean unnecessary long urls instead of ignoring it
   // e.g. https://github.com/vercel/next.js/tree/canary/examples/
+  if (link.split('/').length > 3) {
+    return result;
+  }
+
   if (link.search('github.com') !== -1) {
-    const cleaned = link
-      .replace('https://', '')
-      .replace('git@github.com:', '')
-      .replace('.git', '');
+    const cleaned = link.replace('git@github.com:', '');
 
     const splitted = cleaned.split('/');
 
@@ -34,10 +37,7 @@ export const repoUrlParser = (input = '') => {
       provider: 'GITHUB',
     };
   } else if (link.search('gitlab.com') !== -1) {
-    const cleaned = link
-      .replace('https://', '')
-      .replace('git@gitlab.com:', '')
-      .replace('.git', '');
+    const cleaned = link.replace('git@gitlab.com:', '');
 
     const splitted = cleaned.split('/');
 
@@ -46,9 +46,10 @@ export const repoUrlParser = (input = '') => {
       user: splitted[splitted.length - 2],
       provider: 'GITLAB',
     };
-  } else {
-    throw new Error('Currently accepts only GitHub or GitLab repo URL');
   }
 
   return result;
 };
+
+// alias :D
+export const parseRepoUrl = repoUrlParser;

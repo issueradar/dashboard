@@ -1,48 +1,85 @@
-import { useState, useEffect, useRef } from 'react';
-import Layout from '@/components/app/Layout';
-import BlurImage from '@/components/BlurImage';
-import Modal from '@/components/Modal';
-import LoadingDots from '@/components/app/loading-dots';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/router';
+import type { Project } from '@prisma/client';
 import useSWR from 'swr';
-import { useDebounce } from 'use-debounce';
+import { useDebounce } from 'react-use';
+// import { useRouter } from 'next/router';
+import { useSession } from 'next-auth/react';
+import { useState, useEffect, useRef } from 'react';
+import {
+  Button,
+  FormControl,
+  FormErrorMessage,
+  FormLabel,
+  Input,
+  InputGroup,
+  InputRightElement,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  useDisclosure,
+} from '@chakra-ui/react';
+import { CheckIcon } from '@chakra-ui/icons';
+import BlurImage from '@/components/BlurImage';
+import Layout from '@/components/app/Layout';
 import { fetcher } from '@/lib/fetcher';
+import { parseRepoUrl, initial } from '@/lib/url-parser';
 import { HttpMethod } from '@/types';
 
-import type { Project } from '@prisma/client';
-
 export default function AppIndex() {
-  const [showModal, setShowModal] = useState<boolean>(false);
-  const [creatingProject, setCreatingProject] = useState<boolean>(false);
-  const [subdomain, setSubdomain] = useState<string>('');
-  const [debouncedSubdomain] = useDebounce(subdomain, 1500);
+  const [isCreating, setCreating] = useState(false);
+  const [subdomain, setSubdomain] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const projectNameRef = useRef<HTMLInputElement | null>(null);
-  const projectSubdomainRef = useRef<HTMLInputElement | null>(null);
-  const projectRepoUrlRef = useRef<HTMLInputElement | null>(null);
-  const projectDescriptionRef = useRef<HTMLTextAreaElement | null>(null);
+  const [repoUrl, setRepoUrl] = useState('');
+  const [parsedRepo, setParsedRepo] = useState(initial);
+  const [projectName, setProjectName] = useState('');
+
+  const [isManuallyEdited, setManuallyEdited] = useState(false);
+  const initialRef = useRef(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  useDebounce(
+    () => {
+      const { user, repo, provider } = parseRepoUrl(repoUrl);
+
+      setParsedRepo({ user, repo, provider });
+
+      if (!isManuallyEdited) {
+        if (provider !== 'UNKNOWN') {
+          setProjectName(`${user}/${repo}`);
+        }
+
+        if (!error) {
+          setSubdomain(repo);
+        }
+      }
+    },
+    1000,
+    [repoUrl],
+  );
 
   useEffect(() => {
     async function checkSubDomain() {
-      if (debouncedSubdomain.length > 0) {
+      if (subdomain) {
         const response = await fetch(
-          `/api/domain/check?domain=${debouncedSubdomain}&subdomain=1`,
+          `/api/domain/check?domain=${subdomain}&subdomain=1`,
         );
         const available = await response.json();
         if (available) {
           setError(null);
         } else {
-          setError(`${debouncedSubdomain}.vercel.pub`);
+          setError(`${subdomain}.vercel.pub is taken`);
         }
       }
     }
     checkSubDomain();
-  }, [debouncedSubdomain]);
+  }, [subdomain]);
 
-  const router = useRouter();
+  // const router = useRouter();
 
   const { data: session } = useSession();
   const sessionId = session?.user?.id;
@@ -52,7 +89,8 @@ export default function AppIndex() {
     fetcher,
   );
 
-  async function createProject() {
+  async function handleCreateProject() {
+    setCreating(true);
     const res = await fetch('/api/project', {
       method: HttpMethod.POST,
       headers: {
@@ -60,10 +98,9 @@ export default function AppIndex() {
       },
       body: JSON.stringify({
         userId: sessionId,
-        name: projectNameRef.current?.value,
-        repoUrl: projectRepoUrlRef.current?.value,
-        subdomain: projectSubdomainRef.current?.value,
-        description: projectDescriptionRef.current?.value,
+        name: projectName,
+        repoUrl: repoUrl,
+        subdomain: subdomain,
       }),
     });
 
@@ -72,112 +109,95 @@ export default function AppIndex() {
     }
 
     const data = await res.json();
-    router.push(`/project/${data.projectId}`);
+    setCreating(false);
+    console.log('### data: ', { data });
+    // router.push(`/project/${data.projectId}`);
   }
+
+  const shouldDisableCreating = !repoUrl && !projectName;
 
   return (
     <Layout>
-      <Modal showModal={showModal} setShowModal={setShowModal}>
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            setCreatingProject(true);
-            createProject();
-          }}
-          className="inline-block w-full max-w-md pt-8 overflow-hidden text-center align-middle transition-all bg-white shadow-xl rounded-lg"
-        >
-          <h2 className="font-cal text-2xl mb-6">Create a New Project</h2>
-          <div className="grid gap-y-5 w-5/6 mx-auto">
-            <div className="border border-gray-700 rounded-lg flex flex-start items-center">
-              <span className="pl-5 pr-1">📌</span>
-              <input
-                className="w-full px-5 py-3 text-gray-700 bg-white border-none focus:outline-none focus:ring-0 rounded-none rounded-r-lg placeholder-gray-400"
-                name="name"
-                required
-                placeholder="Project Name"
-                ref={projectNameRef}
-                type="text"
-              />
-            </div>
-            <div className="border border-gray-700 rounded-lg flex flex-start items-center">
-              <span className="pl-5 pr-1">🪧</span>
-              <input
-                className="w-full px-5 py-3 text-gray-700 bg-white border-none focus:outline-none focus:ring-0 rounded-none rounded-l-lg placeholder-gray-400"
-                name="subdomain"
-                onInput={() => setSubdomain(projectSubdomainRef.current!.value)}
-                placeholder="Subdomain"
-                ref={projectSubdomainRef}
-                type="text"
-              />
-              <span className="px-5 bg-gray-100 h-full flex items-center rounded-r-lg border-l border-gray-600">
-                .vercel.pub
-              </span>
-            </div>
-            {error && (
-              <p className="px-5 text-left text-red-500">
-                <b>{error}</b> is not available. Please choose another
-                subdomain.
-              </p>
-            )}
-            <div className="border border-gray-700 rounded-lg flex flex-start items-center">
-              <span className="pl-5 pr-1">🔗</span>
-              <input
-                className="w-full px-5 py-3 text-gray-700 bg-white border-none focus:outline-none focus:ring-0 rounded-none rounded-r-lg placeholder-gray-400"
-                name="repoUrl"
-                required
-                placeholder="Repo URL"
-                ref={projectRepoUrlRef}
-                type="text"
-              />
-            </div>
-            <div className="border border-gray-700 rounded-lg flex flex-start items-top">
-              <span className="pl-5 pr-1 mt-3">✍️</span>
-              <textarea
-                className="w-full px-5 py-3 text-gray-700 bg-white border-none focus:outline-none focus:ring-0 rounded-none rounded-r-lg placeholder-gray-400"
-                name="description"
-                placeholder="Description"
-                ref={projectDescriptionRef}
-                required
-                rows={3}
-              />
-            </div>
-          </div>
-          <div className="flex justify-between items-center mt-10 w-full">
-            <button
-              type="button"
-              className="w-full px-5 py-5 text-sm text-gray-600 hover:text-black border-t border-gray-300 rounded-bl focus:outline-none focus:ring-0 transition-all ease-in-out duration-150"
-              onClick={() => {
-                setError(null);
-                setShowModal(false);
-              }}
-            >
-              CANCEL
-            </button>
+      <Modal
+        closeOnOverlayClick={false}
+        initialFocusRef={initialRef}
+        isOpen={isOpen}
+        onClose={onClose}
+      >
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Create new project</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <FormControl mt={4} isRequired>
+              <FormLabel>Repo URL</FormLabel>
+              <InputGroup>
+                <Input
+                  ref={initialRef}
+                  placeholder="https//github.com/<user>/<repo>.git"
+                  value={repoUrl}
+                  onChange={(e) => setRepoUrl(e.currentTarget.value)}
+                />
+                {parsedRepo.provider !== 'UNKNOWN' && (
+                  <InputRightElement>
+                    <CheckIcon color="green.500" />
+                  </InputRightElement>
+                )}
+              </InputGroup>
+            </FormControl>
 
-            <button
-              type="submit"
-              disabled={creatingProject || error !== null}
-              className={`${
-                creatingProject || error
-                  ? 'cursor-not-allowed text-gray-400 bg-gray-50'
-                  : 'bg-white text-gray-600 hover:text-black'
-              } w-full px-5 py-5 text-sm border-t border-l border-gray-300 rounded-br focus:outline-none focus:ring-0 transition-all ease-in-out duration-150`}
+            <FormControl mt={4}>
+              <FormLabel>Project name</FormLabel>
+              <Input
+                placeholder="user/repo"
+                value={projectName}
+                onChange={(e) => {
+                  setManuallyEdited(true);
+                  setProjectName(e.currentTarget.value);
+                }}
+              />
+            </FormControl>
+
+            {(isManuallyEdited || error) && (
+              <FormControl mt={4} isInvalid={!!error}>
+                <FormLabel>Subdomain</FormLabel>
+                <Input
+                  placeholder="repo"
+                  value={subdomain}
+                  onChange={(e) => {
+                    setManuallyEdited(true);
+                    setSubdomain(e.currentTarget.value);
+                  }}
+                />
+                {error && <FormErrorMessage>{error}</FormErrorMessage>}
+              </FormControl>
+            )}
+          </ModalBody>
+
+          <ModalFooter>
+            <Button
+              isLoading={isCreating}
+              isDisabled={shouldDisableCreating}
+              colorScheme="blue"
+              mr={3}
+              onClick={handleCreateProject}
             >
-              {creatingProject ? <LoadingDots /> : 'CREATE PROJECT'}
-            </button>
-          </div>
-        </form>
+              Create
+            </Button>
+            <Button onClick={onClose}>Cancel</Button>
+          </ModalFooter>
+        </ModalContent>
       </Modal>
 
       <div className="py-20 max-w-screen-xl mx-auto px-10 sm:px-20">
         <div className="flex flex-col sm:flex-row space-y-5 sm:space-y-0 justify-between items-center">
           <h1 className="font-cal text-5xl">My Projectss</h1>
-          <button
-            onClick={() => setShowModal(true)}
+          <Button
+            onClick={onOpen}
             className="font-cal text-lg w-3/4 sm:w-40 tracking-wide text-white bg-black border-black border-2 px-5 py-3 hover:bg-white hover:text-black transition-all ease-in-out duration-150"
           >
             New Project <span className="ml-2">＋</span>
-          </button>
+          </Button>
         </div>
         <div className="my-10 grid gap-y-10">
           {projects ? (

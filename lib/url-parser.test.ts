@@ -62,10 +62,26 @@ describe('url-parser', () => {
     });
   });
 
-  it('throws error with bad link', () => {
-    expect(() => repoUrlParser('https://nextjs.org/docs/testing')).toThrowError(
-      /^Currently accepts only GitHub or GitLab repo URL$/,
+  it('returns empty result with not a git url', () => {
+    const result = repoUrlParser('https://nextjs.org/docs/testing');
+
+    expect(result).toEqual({
+      user: '',
+      repo: '',
+      provider: 'UNKNOWN',
+    });
+  });
+
+  it('returns empty result with a git url too long', () => {
+    const result = repoUrlParser(
+      'https://github.com/vercel/platforms/tree/main',
     );
+
+    expect(result).toEqual({
+      user: '',
+      repo: '',
+      provider: 'UNKNOWN',
+    });
   });
 
   // TODO: Add more checkings for bad links
