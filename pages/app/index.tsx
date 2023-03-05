@@ -1,7 +1,7 @@
 import type { Project } from '@prisma/client';
 import useSWR from 'swr';
 import { useDebounce } from 'react-use';
-// import { useRouter } from 'next/router';
+import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 import { useState, useEffect, useRef } from 'react';
 import {
@@ -21,6 +21,7 @@ import {
   ModalFooter,
   ModalHeader,
   ModalOverlay,
+  SimpleGrid,
   useDisclosure,
 } from '@chakra-ui/react';
 import { CheckIcon, AddIcon } from '@chakra-ui/icons';
@@ -80,7 +81,7 @@ export default function AppIndex() {
     checkSubDomain();
   }, [subdomain]);
 
-  // const router = useRouter();
+  const router = useRouter();
 
   const { data: session } = useSession();
   const sessionId = session?.user?.id;
@@ -111,8 +112,7 @@ export default function AppIndex() {
 
     const data = await res.json();
     setCreating(false);
-    console.log('### data: ', { data });
-    // router.push(`/project/${data.projectId}`);
+    router.push(`/project/${data.projectId}`);
   }
 
   const shouldDisableCreating = !repoUrl && !projectName;
@@ -121,7 +121,7 @@ export default function AppIndex() {
     <>
       <Layout>
         <Flex direction="column">
-          <Flex justifyContent="end">
+          <Flex marginBottom={4} justifyContent="end">
             <Button colorScheme="green" leftIcon={<AddIcon />} onClick={onOpen}>
               New Project
             </Button>
@@ -130,9 +130,14 @@ export default function AppIndex() {
           <Box>
             {projects ? (
               projects.length > 0 ? (
-                projects.map((project) => (
-                  <ProjectCard key={`${project.id}`} project={project} />
-                ))
+                <SimpleGrid
+                  spacing={4}
+                  templateColumns="repeat(auto-fill, minmax(300px, 1fr))"
+                >
+                  {projects.map((project) => (
+                    <ProjectCard key={`${project.id}`} project={project} />
+                  ))}
+                </SimpleGrid>
               ) : (
                 <>
                   <div className="flex flex-col md:flex-row md:h-60 rounded-lg overflow-hidden border border-gray-200">
