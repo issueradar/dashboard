@@ -1,14 +1,13 @@
+import type { Post, Project } from '@prisma/client';
 import useSWR from 'swr';
-import { useRouter } from 'next/router';
-import { useState } from 'react';
 import { Button, Flex, Text } from '@chakra-ui/react';
-import { RepeatIcon } from '@chakra-ui/icons';
+import { HttpMethod, Message, CreateChatCompletionResponse } from '@/types';
 import Layout from '@/components/app/Layout';
 import { Link } from '@/components';
+import { RepeatIcon } from '@chakra-ui/icons';
 import { fetcher } from '@/lib/fetcher';
-import { HttpMethod, Message, CreateChatCompletionResponse } from '@/types';
-
-import type { Post, Project } from '@prisma/client';
+import { useRouter } from 'next/router';
+import { useState } from 'react';
 
 // eslint-disable-next-line
 type UnknownData = Record<string, any>;
@@ -125,12 +124,9 @@ export default function ProjectIndex() {
   }
 
   return (
-    <Layout>
-      <Flex direction="column" paddingX={10}>
-        <div className="flex flex-col sm:flex-row space-y-5 sm:space-y-0 justify-between items-center">
-          <Text as="h1" fontSize="4xl" fontWeight="bold">
-            {data ? data?.project?.name : '...'}
-          </Text>
+    <Layout project={data?.project}>
+      <Flex direction="column">
+        <Flex justifyContent="end">
           <Button
             colorScheme="green"
             disabled={isLoading}
@@ -141,7 +137,7 @@ export default function ProjectIndex() {
           >
             Update
           </Button>
-        </div>
+        </Flex>
         {answers.length > 0 &&
           answers.map((answer, index) => (
             <Flex

@@ -18,7 +18,14 @@ export type NavbarProps = {
 
 export const Navbar = ({ user }: NavbarProps) => {
   return (
-    <Box as="nav" role="navigation" boxShadow="sm">
+    <Box
+      as="nav"
+      role="navigation"
+      aria-label="Main navigation"
+      px={{ base: '2', lg: '4' }}
+      borderBottom="1px"
+      borderBottomColor="gray.100"
+    >
       <Container maxW="100vw" py={{ base: '1', lg: '2' }}>
         <HStack spacing="10" justify="space-between">
           <Link href="/" width={40} display="flex" alignItems="center">
@@ -28,7 +35,7 @@ export const Navbar = ({ user }: NavbarProps) => {
           </Link>
 
           <Flex justify="space-between" flex="1">
-            <ButtonGroup variant="link" spacing="8">
+            <ButtonGroup size="sm" variant="link" spacing="8">
               <Button>
                 <Link href="/" _hover={{ textDecoration: 'none' }}>
                   Projects
@@ -46,12 +53,13 @@ export const Navbar = ({ user }: NavbarProps) => {
                   <Image
                     src={user.image}
                     borderRadius="full"
-                    width={10}
-                    height={10}
+                    width={8}
+                    height={8}
                     alt={user.name ?? 'User avatar'}
                   />
                 )}
                 <Text
+                  size="sm"
                   fontWeight="bold"
                   noOfLines={1}
                   marginLeft={4}
@@ -61,7 +69,7 @@ export const Navbar = ({ user }: NavbarProps) => {
                 </Text>
               </Link>
 
-              <Button variant="link" onClick={() => signOut()}>
+              <Button size="sm" variant="link" onClick={() => signOut()}>
                 Logout
               </Button>
             </HStack>

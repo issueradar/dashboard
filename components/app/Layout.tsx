@@ -1,28 +1,44 @@
 import Head from 'next/head';
-import { signOut } from 'next-auth/react';
+import type { Project } from '@prisma/client';
+import { Box, Container, Text } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
-import { Button, Box, Divider, Flex, Text } from '@chakra-ui/react';
-import { Image, Link } from '@/components';
 import useRequireAuth from '@/lib/useRequireAuth';
 import Loader from './Loader';
+import { Navbar } from './Navbar';
+import { ProjectNavbar } from './ProjectNavbar';
 
 import type { WithChildren } from '@/types';
 
 interface LayoutProps extends WithChildren {
-  projectId?: string;
+  project?: Project | null;
 }
 
-export default function Layout({ projectId, children }: LayoutProps) {
+export default function Layout({ children, project }: LayoutProps) {
   const title = 'IssueRadar';
   const description = 'Quickly get biggest issues from a GitHub project';
   const logo = '/favicon.ico';
   const router = useRouter();
   const projectPage = router.pathname.startsWith('/app/project/[id]');
-  const postPage = router.pathname.startsWith('/app/post/[id]');
-  const rootPage = !projectPage && !postPage;
+  const rootPage = !projectPage;
   const tab = rootPage
     ? router.asPath.split('/')[1]
     : router.asPath.split('/')[3];
+
+  const currentTitle = () => {
+    if (!projectPage && tab === 'settings') {
+      return 'Profile settings';
+    }
+
+    if (rootPage) {
+      return 'My projects';
+    }
+
+    if (projectPage && project) {
+      return project.name;
+    }
+
+    return '...';
+  };
 
   const session = useRequireAuth();
   if (!session) return <Loader />;
@@ -56,158 +72,23 @@ export default function Layout({ projectId, children }: LayoutProps) {
         <meta name="twitter:image" content={logo} />
       </Head>
 
-      <Flex
-        alignItems="center"
-        justifyContent="between"
-        height={16}
-        marginX="auto"
-        paddingX={10}
-        maxWidth="100%"
-        borderBottomWidth="1px"
-        borderBottomColor="gray.200"
-      >
-        <Flex width={60} justifyContent="space-between">
-          <Link href="/" width={40} display="flex" alignItems="center">
-            {session.user && session.user.image && (
-              <Image
-                src={session.user.image}
-                borderRadius="full"
-                width={12}
-                height={12}
-                alt={session.user.name ?? 'User avatar'}
-              />
-            )}
-            <Text fontWeight="bold" noOfLines={1} marginLeft={4} maxWidth={24}>
-              {session.user?.name}
-            </Text>
-          </Link>
+      <Navbar user={session.user} />
 
-          <Divider orientation="vertical" />
+      <Box as="section" px={{ base: '2', lg: '4' }}>
+        <Container maxW="100vw" mt={2} py={{ base: '1', lg: '2' }}>
+          <Text as="h1" fontSize="4xl" fontWeight="bold">
+            {currentTitle()}
+          </Text>
+        </Container>
+      </Box>
 
-          <Button variant="link" onClick={() => signOut()}>
-            Logout
-          </Button>
-        </Flex>
-      </Flex>
-      {rootPage && (
-        <Flex
-          height={16}
-          justifyContent="center"
-          alignItems="center"
-          borderBottomWidth="1px"
-          borderBottomColor="gray.200"
-        >
-          <Link
-            href="/"
-            marginX={2}
-            borderBottom="1px"
-            borderBottomColor={tab === '' ? 'gray.400' : 'transparent'}
-            _hover={{ textDecoration: 'none' }}
-          >
-            My Projects
-          </Link>
-          <Link
-            href="/settings"
-            marginX={2}
-            borderBottom="1px"
-            borderBottomColor={tab === 'settings' ? 'gray.400' : 'transparent'}
-            _hover={{ textDecoration: 'none' }}
-          >
-            Settings
-          </Link>
-        </Flex>
-      )}
-      {projectPage && (
-        <Flex
-          height={16}
-          justifyContent="center"
-          alignItems="center"
-          borderBottomWidth="1px"
-          borderBottomColor="gray.200"
-        >
-          <Flex
-            paddingX={10}
-            justifyContent="space-between"
-            alignItems="center"
-            width="100%"
-          >
-            <Link href="/">← All Projects</Link>
-            <Flex justifyContent="space-between" alignItems="center">
-              <Link
-                href={`/project/${router.query.id}`}
-                marginX={2}
-                borderBottom="1px"
-                borderBottomColor={!tab ? 'gray.400' : 'transparent'}
-                _hover={{ textDecoration: 'none' }}
-              >
-                Posts
-              </Link>
-              <Link
-                href={`/project/${router.query.id}/drafts`}
-                marginX={2}
-                borderBottom="1px"
-                borderBottomColor={
-                  tab === 'drafts' ? 'gray.400' : 'transparent'
-                }
-                _hover={{ textDecoration: 'none' }}
-              >
-                Drafts
-              </Link>
-              <Link
-                href={`/project/${router.query.id}/settings`}
-                marginX={2}
-                borderBottom="1px"
-                borderBottomColor={
-                  tab === 'settings' ? 'gray.400' : 'transparent'
-                }
-                _hover={{ textDecoration: 'none' }}
-              >
-                Settings
-              </Link>
-            </Flex>
-            <div />
-          </Flex>
-        </Flex>
-      )}
-      {postPage && (
-        <div className="absolute left-0 right-0 top-16 font-cal border-b bg-white border-gray-200">
-          <div className="flex justify-between items-center space-x-16 max-w-screen-xl mx-auto px-10 sm:px-20">
-            {projectId ? (
-              <Link
-                href={`/project/${projectId}`}
-                className="md:inline-block ml-3 hidden"
-              >
-                ← All Posts
-              </Link>
-            ) : (
-              <div>
-                ←<p className="md:inline-block ml-3 hidden">All Posts</p>
-              </div>
-            )}
+      {project && <ProjectNavbar project={project} />}
 
-            <div className="flex justify-between items-center space-x-10 md:space-x-16">
-              <Link
-                href={`/post/${router.query.id}`}
-                className={`border-b-2 ${
-                  !tab ? 'border-black' : 'border-transparent'
-                } py-3`}
-              >
-                Editor
-              </Link>
-              <Link
-                href={`/post/${router.query.id}/settings`}
-                className={`border-b-2 ${
-                  tab == 'settings' ? 'border-black' : 'border-transparent'
-                } py-3`}
-              >
-                Settings
-              </Link>
-            </div>
-            <div />
-          </div>
-        </div>
-      )}
-      <Box paddingTop={10}>{children}</Box>
+      <Box as="main" px={{ base: '2', lg: '4' }}>
+        <Container maxW="100vw" paddingTop={4}>
+          {children}
+        </Container>
+      </Box>
     </>
   );
 }

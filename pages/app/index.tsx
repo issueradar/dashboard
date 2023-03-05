@@ -136,7 +136,7 @@ export default function AppIndex() {
                   ref={initialRef}
                   placeholder="https//github.com/<user>/<repo>.git"
                   value={repoUrl}
-                  onChange={(e) => setRepoUrl(e.currentTarget.value)}
+                  onChange={(e) => setRepoUrl(e.target.value)}
                 />
                 {parsedRepo.provider !== 'UNKNOWN' && (
                   <InputRightElement>
@@ -153,7 +153,7 @@ export default function AppIndex() {
                 value={projectName}
                 onChange={(e) => {
                   setManuallyEdited(true);
-                  setProjectName(e.currentTarget.value);
+                  setProjectName(e.target.value);
                 }}
               />
             </FormControl>
@@ -166,7 +166,7 @@ export default function AppIndex() {
                   value={subdomain}
                   onChange={(e) => {
                     setManuallyEdited(true);
-                    setSubdomain(e.currentTarget.value);
+                    setSubdomain(e.target.value);
                   }}
                 />
                 {error && <FormErrorMessage>{error}</FormErrorMessage>}
