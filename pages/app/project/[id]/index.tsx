@@ -128,7 +128,7 @@ export default function ProjectIndex() {
       <Flex direction="column">
         <Flex justifyContent="end">
           <Button
-            colorScheme="green"
+            colorScheme="blue"
             disabled={isLoading}
             isLoading={isLoading}
             leftIcon={<RepeatIcon />}
