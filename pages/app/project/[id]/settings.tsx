@@ -256,9 +256,10 @@ export default function ProjectSettings() {
               platform. This action is not reversible – please continue with
               caution.
             </AlertDescription>
-            <Box>
+            <Box marginLeft={3}>
               <Button
                 colorScheme="red"
+                size="xs"
                 onClick={() => setShowDeleteModal(true)}
               >
                 Delete Project

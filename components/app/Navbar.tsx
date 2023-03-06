@@ -3,10 +3,10 @@ import {
   Button,
   ButtonGroup,
   Container,
-  // Divider,
   Flex,
   HStack,
   Text,
+  useColorModeValue,
 } from '@chakra-ui/react';
 import { signOut } from 'next-auth/react';
 import type { Session } from 'next-auth';
@@ -17,6 +17,8 @@ export type NavbarProps = {
 };
 
 export const Navbar = ({ user }: NavbarProps) => {
+  const borderColor = useColorModeValue('gray.100', 'gray.700');
+
   return (
     <Box
       as="nav"
@@ -24,7 +26,7 @@ export const Navbar = ({ user }: NavbarProps) => {
       aria-label="Main navigation"
       px={{ base: '2', lg: '4' }}
       borderBottom="1px"
-      borderBottomColor="gray.100"
+      borderBottomColor={borderColor}
     >
       <Container maxW="100vw" py={{ base: '1', lg: '2' }}>
         <HStack spacing="10" justify="space-between">

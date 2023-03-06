@@ -1,4 +1,11 @@
-import { Box, Button, ButtonGroup, Container, Flex } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  ButtonGroup,
+  Container,
+  Flex,
+  useColorModeValue,
+} from '@chakra-ui/react';
 import type { Project } from '@prisma/client';
 import { Link } from '@/components';
 
@@ -7,14 +14,16 @@ export type ProjectNavbarProps = {
 };
 
 export const ProjectNavbar = ({ project }: ProjectNavbarProps) => {
+  const borderColor = useColorModeValue('gray.100', 'gray.700');
+
   return (
     <Box
       as="nav"
       role="navigation"
       aria-label="Project navigation"
-      borderBottom="1px"
-      borderBottomColor="gray.100"
       px={{ base: '2', lg: '4' }}
+      borderBottom="1px"
+      borderBottomColor={borderColor}
     >
       <Container maxW="100vw" py={{ base: '1', lg: '2' }}>
         <Flex justify="space-between" flex="1">
