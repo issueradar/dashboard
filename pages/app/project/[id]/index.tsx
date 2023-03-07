@@ -2,13 +2,13 @@ import type { Project, Digest } from '@prisma/client';
 import useSWR, { mutate } from 'swr';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
-import { Button, Flex, Text, useToast } from '@chakra-ui/react';
+import { Button, Center, Flex, Text, useToast } from '@chakra-ui/react';
 import { RepeatIcon } from '@chakra-ui/icons';
 import {
-  HttpMethod,
-  Message,
   CreateChatCompletionResponse,
+  HttpMethod,
   Issue,
+  Message,
 } from '@/types';
 import Layout from '@/components/app/Layout';
 import { fetcher } from '@/lib/fetcher';
@@ -20,21 +20,17 @@ type DigestInput = {
 };
 
 type ProjectDigestData = {
-  digests: Digest[];
+  digests: Digest;
   project: Project | null;
 };
 
 export default function ProjectIndex() {
   const [isLoading, setLoading] = useState(false);
   const [currentTask, setCurrentTask] = useState('');
-  const [answers, setAnswers] = useState<
-    CreateChatCompletionResponse['choices']
-  >([]);
 
   const toast = useToast();
   const router = useRouter();
   const { id: projectId } = router.query;
-  console.log('### projectId: ', { projectId });
 
   const { data } = useSWR<ProjectDigestData>(
     projectId && `/api/digest?projectId=${projectId}`,
@@ -44,14 +40,12 @@ export default function ProjectIndex() {
     },
   );
 
-  console.log('### data: ', { data });
-
   const askGPT = async (
     messages: Message[],
   ): Promise<CreateChatCompletionResponse | undefined> => {
     try {
       setLoading(true);
-      setCurrentTask('Asking AI...');
+      setCurrentTask('Analyzing...');
 
       const res = await fetch('/api/analyse', {
         method: HttpMethod.POST,
@@ -83,7 +77,7 @@ export default function ProjectIndex() {
       });
 
       if (response.ok) {
-        mutate(`/api/digest?projectId=${projectId}&published=true`);
+        mutate(`/api/digest?projectId=${projectId}`);
         toast({
           title: 'Digest saved successfully!',
           status: 'success',
@@ -110,6 +104,8 @@ export default function ProjectIndex() {
       throw new Error('Can not get repo URL');
     }
 
+    setCurrentTask('Getting data...');
+
     for (let page = 1; page <= 1; page++) {
       await new Promise((r) => setTimeout(r, 500));
       const newIssues: Issue[] = await getIssues({ repoUrl, page });
@@ -123,7 +119,7 @@ export default function ProjectIndex() {
           'You are a senior and helpful technical analyst. You will read a list of GitHub issue with format "#issue ID# Issue title"',
       },
       ...newData.map<Message>((issue) => {
-        const content = `#${issue.id}# ${issue.title}`;
+        const content = `#${issue.number}# ${issue.title}`;
         return {
           role: 'assistant',
           content,
@@ -132,17 +128,22 @@ export default function ProjectIndex() {
       {
         role: 'user',
         content:
-          'Group all the issue titles into categories, and write the summary of each category',
+          'Group all the issue titles into categories, sort by the most repetitive issues first, and write the really short summary of each category in essay style',
+      },
+      {
+        role: 'user',
+        content: 'Format the summary in markdown syntax',
       },
     ];
 
     const res = await askGPT(messages);
 
     if (res?.choices?.[0]) {
-      setAnswers(res.choices);
       const digestContent = res.choices[0].message?.content;
 
       if (digestContent && projectId) {
+        setCurrentTask('Saving...');
+
         await saveDigest({
           content: digestContent,
           projectId: projectId as string,
@@ -168,17 +169,24 @@ export default function ProjectIndex() {
             Update
           </Button>
         </Flex>
-        {answers.length > 0 &&
-          answers.map((answer, index) => (
-            <Flex
-              key={`answer-${index}`}
-              padding={2}
-              border="1px"
-              borderColor="green.400"
-            >
-              <Text>{answer?.message?.content}</Text>
-            </Flex>
-          ))}
+        {data?.digests ? (
+          <Flex
+            marginY={4}
+            padding={4}
+            border="1px"
+            borderColor="chakra-border-color"
+            borderRadius="md"
+          >
+            {data?.digests?.content}
+          </Flex>
+        ) : (
+          <Center>
+            <Text fontSize="sm" fontStyle="italic">
+              Do not have any recent report. Click &quot;Update&quot; button to
+              get it.
+            </Text>
+          </Center>
+        )}
       </Flex>
     </Layout>
   );

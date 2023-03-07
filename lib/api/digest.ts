@@ -64,17 +64,18 @@ export async function getDigest(
 
     const digests = !project
       ? []
-      : await prisma.digest.findMany({
+      : await prisma.digest.findFirst({
           where: {
             project: {
               id: projectId,
             },
-            published: JSON.parse(published || 'true'),
           },
           orderBy: {
             createdAt: 'desc',
           },
         });
+
+    console.log('### digests: ', { digests });
 
     return res.status(200).json({
       digests,

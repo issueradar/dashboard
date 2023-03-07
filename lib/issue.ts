@@ -6,7 +6,7 @@ const providerServer = (provider: Provider) => {
     case 'GITHUB':
       return 'https://api.github.com';
     case 'GITLAB':
-      return 'http://gitlab.example.com/api/v4';
+      return 'http://gitlab.com/api/v4';
     case 'UNKNOWN':
     default:
       throw new Error('Currently supports GitHub and GitLab only');
