@@ -75,8 +75,6 @@ export async function getDigest(
           },
         });
 
-    console.log('### digests: ', { digests });
-
     return res.status(200).json({
       digests,
       project,

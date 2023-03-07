@@ -24,7 +24,6 @@ import type { Project } from '@prisma/client';
 import Layout from '@/components/app/Layout';
 import LoadingDots from '@/components/app/loading-dots';
 import Modal from '@/components/Modal';
-
 import { fetcher } from '@/lib/fetcher';
 import { HttpMethod } from '@/types';
 
@@ -161,7 +160,7 @@ export default function ProjectSettings() {
 
   return (
     <>
-      <Layout project={settings}>
+      <Layout projectId={projectId as string}>
         <Container>
           <Text as="h2" fontSize="2xl" fontWeight="bold">
             Project Settings

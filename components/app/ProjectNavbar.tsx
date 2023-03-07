@@ -21,7 +21,6 @@ export const ProjectNavbar = ({ project }: ProjectNavbarProps) => {
       as="nav"
       role="navigation"
       aria-label="Project navigation"
-      px={{ base: '2', lg: '4' }}
       borderBottom="1px"
       borderBottomColor={borderColor}
     >

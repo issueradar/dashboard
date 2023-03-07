@@ -1,8 +1,17 @@
 import type { Project, Digest } from '@prisma/client';
+import ReactMarkdown from 'react-markdown';
 import useSWR, { mutate } from 'swr';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
-import { Button, Center, Flex, Text, useToast } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  Center,
+  Flex,
+  SkeletonText,
+  Text,
+  useToast,
+} from '@chakra-ui/react';
 import { RepeatIcon } from '@chakra-ui/icons';
 import {
   CreateChatCompletionResponse,
@@ -25,14 +34,14 @@ type ProjectDigestData = {
 };
 
 export default function ProjectIndex() {
-  const [isLoading, setLoading] = useState(false);
+  const [isWorking, setWorking] = useState(false);
   const [currentTask, setCurrentTask] = useState('');
 
   const toast = useToast();
   const router = useRouter();
   const { id: projectId } = router.query;
 
-  const { data } = useSWR<ProjectDigestData>(
+  const { data, isLoading } = useSWR<ProjectDigestData>(
     projectId && `/api/digest?projectId=${projectId}`,
     fetcher,
     {
@@ -44,7 +53,7 @@ export default function ProjectIndex() {
     messages: Message[],
   ): Promise<CreateChatCompletionResponse | undefined> => {
     try {
-      setLoading(true);
+      setWorking(true);
       setCurrentTask('Analyzing...');
 
       const res = await fetch('/api/analyse', {
@@ -65,7 +74,7 @@ export default function ProjectIndex() {
   };
 
   async function saveDigest({ content, projectId }: DigestInput) {
-    setLoading(true);
+    setWorking(true);
 
     try {
       const response = await fetch(`/api/digest?projectId=${projectId}`, {
@@ -90,12 +99,12 @@ export default function ProjectIndex() {
       });
       console.error(error);
     } finally {
-      setLoading(false);
+      setWorking(false);
     }
   }
 
   async function handleButtonClick() {
-    setLoading(true);
+    setWorking(true);
     const newData = [];
 
     const repoUrl = data?.project?.repoUrl;
@@ -106,7 +115,7 @@ export default function ProjectIndex() {
 
     setCurrentTask('Getting data...');
 
-    for (let page = 1; page <= 1; page++) {
+    for (let page = 1; page <= 3; page++) {
       await new Promise((r) => setTimeout(r, 500));
       const newIssues: Issue[] = await getIssues({ repoUrl, page });
       newData.push(...newIssues);
@@ -116,10 +125,10 @@ export default function ProjectIndex() {
       {
         role: 'system',
         content:
-          'You are a senior and helpful technical analyst. You will read a list of GitHub issue with format "#issue ID# Issue title"',
+          'You are a senior and helpful technical analyst. You will read a list of GitHub issue with format "#id Issue title"',
       },
       ...newData.map<Message>((issue) => {
-        const content = `#${issue.number}# ${issue.title}`;
+        const content = `#${issue.number} ${issue.title}`;
         return {
           role: 'assistant',
           content,
@@ -150,18 +159,18 @@ export default function ProjectIndex() {
         });
       }
     }
-    setLoading(false);
+    setWorking(false);
     setCurrentTask('');
   }
 
   return (
-    <Layout project={data?.project}>
+    <Layout projectId={projectId as string}>
       <Flex direction="column">
         <Flex justifyContent="end">
           <Button
             colorScheme="blue"
-            disabled={isLoading}
-            isLoading={isLoading}
+            disabled={isWorking}
+            isLoading={isWorking}
             leftIcon={<RepeatIcon />}
             loadingText={currentTask}
             onClick={handleButtonClick}
@@ -169,16 +178,15 @@ export default function ProjectIndex() {
             Update
           </Button>
         </Flex>
-        {data?.digests ? (
-          <Flex
-            marginY={4}
-            padding={4}
-            border="1px"
-            borderColor="chakra-border-color"
-            borderRadius="md"
-          >
-            {data?.digests?.content}
-          </Flex>
+
+        {isLoading && (
+          <SkeletonText noOfLines={6} spacing="3" skeletonHeight="4" />
+        )}
+
+        {data?.digests?.content && !isLoading ? (
+          <Box marginY={4} className="digest-markdown">
+            <ReactMarkdown>{data.digests.content}</ReactMarkdown>
+          </Box>
         ) : (
           <Center>
             <Text fontSize="sm" fontStyle="italic">

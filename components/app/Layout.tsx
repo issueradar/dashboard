@@ -1,25 +1,37 @@
 import type { Project } from '@prisma/client';
-import { Box, Container, Text } from '@chakra-ui/react';
+import useSWR from 'swr';
+import { fetcher } from '@/lib/fetcher';
+import { Box, Container, Flex, Skeleton, Text } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import useRequireAuth from '@/lib/useRequireAuth';
 import { CustomHead } from '@/components/app/CustomHead';
 import Loader from './Loader';
 import { Navbar } from './Navbar';
+import { Footer } from './Footer';
 import { ProjectNavbar } from './ProjectNavbar';
 
 import type { WithChildren } from '@/types';
 
 interface LayoutProps extends WithChildren {
-  project?: Project | null;
+  projectId?: string;
 }
 
-export default function Layout({ children, project }: LayoutProps) {
+export default function Layout({ children, projectId }: LayoutProps) {
   const router = useRouter();
   const projectPage = router.pathname.startsWith('/app/project/[id]');
   const rootPage = !projectPage;
   const tab = rootPage
     ? router.asPath.split('/')[1]
     : router.asPath.split('/')[3];
+
+  const { data: project, isLoading } = useSWR<Project | null>(
+    projectId && `/api/project?projectId=${projectId}`,
+    fetcher,
+    {
+      onError: () => router.push('/'),
+      revalidateOnFocus: false,
+    },
+  );
 
   const currentTitle = () => {
     if (!projectPage && tab === 'settings') {
@@ -34,7 +46,7 @@ export default function Layout({ children, project }: LayoutProps) {
       return project.name;
     }
 
-    return '...';
+    return 'Loading...';
   };
 
   const session = useRequireAuth();
@@ -47,23 +59,27 @@ export default function Layout({ children, project }: LayoutProps) {
         description="Quickly get biggest issues from a GitHub project"
       />
 
-      <Navbar user={session.user} />
+      <Flex direction="column" justifyContent="space-between" height="100vh">
+        <Navbar user={session.user} />
 
-      <Box as="section" px={{ base: '2', lg: '4' }}>
-        <Container maxW="100vw" mt={2} py={{ base: '1', lg: '2' }}>
-          <Text as="h1" fontSize="4xl" fontWeight="bold">
-            {currentTitle()}
-          </Text>
-        </Container>
-      </Box>
+        <Box as="section" flex="1" px={{ base: '2', lg: '4' }}>
+          <Container maxW="100vw" mt={2} py={{ base: '1', lg: '2' }}>
+            <Skeleton isLoaded={!isLoading} width="max-content">
+              <Text as="h1" fontSize="4xl" fontWeight="bold">
+                {currentTitle()}
+              </Text>
+            </Skeleton>
+          </Container>
 
-      {project && <ProjectNavbar project={project} />}
+          {project && <ProjectNavbar project={project} />}
 
-      <Box as="main" px={{ base: '2', lg: '4' }}>
-        <Container maxW="100vw" paddingTop={4}>
-          {children}
-        </Container>
-      </Box>
+          <Container maxW="100vw" paddingTop={4}>
+            {children}
+          </Container>
+        </Box>
+
+        <Footer />
+      </Flex>
     </>
   );
 }
