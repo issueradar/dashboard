@@ -1,11 +1,14 @@
-import { HttpMethod } from "@/types";
+import { HttpMethod } from '@/types';
 
 export async function revalidate(
   hostname: string, // hostname to be revalidated
   projectId: string, // projectId
-  slug: string // slugname for the post
+  slug: string, // slugname for the post
 ) {
-  const urlPaths = [`/_projects/${projectId}/${slug}`, `/_projects/${projectId}`];
+  const urlPaths = [
+    `/_projects/${projectId}/${slug}`,
+    `/_projects/${projectId}`,
+  ];
 
   // refer to https://solutions-on-demand-isr.vercel.app/ for more info on bulk/batch revalidate
   try {
@@ -14,13 +17,13 @@ export async function revalidate(
         fetch(`${hostname}/api/revalidate`, {
           method: HttpMethod.POST,
           headers: {
-            "Content-Type": "application/json",
+            'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             urlPath,
           }),
-        })
-      )
+        }),
+      ),
     );
   } catch (err) {
     console.error(err);

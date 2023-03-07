@@ -1,4 +1,4 @@
-import type { Post, Project } from '@prisma/client';
+import type { Project, Digest } from '@prisma/client';
 import useSWR from 'swr';
 import { Button, Flex, Text } from '@chakra-ui/react';
 import { HttpMethod, Message, CreateChatCompletionResponse } from '@/types';
@@ -6,14 +6,15 @@ import Layout from '@/components/app/Layout';
 import { Link } from '@/components';
 import { RepeatIcon } from '@chakra-ui/icons';
 import { fetcher } from '@/lib/fetcher';
+import { parseRepoUrl } from '@/lib/url-parser';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 
 // eslint-disable-next-line
 type UnknownData = Record<string, any>;
 
-interface ProjectPostData {
-  posts: Array<Post>;
+interface ProjectDigestData {
+  digests: Digest[];
   project: Project | null;
 }
 
@@ -29,21 +30,22 @@ export default function ProjectIndex() {
   const router = useRouter();
   const { id: projectId } = router.query;
 
-  const { data } = useSWR<ProjectPostData>(
-    projectId && `/api/post?projectId=${projectId}&published=true`,
+  const { data } = useSWR<ProjectDigestData>(
+    projectId && `/api/digest?projectId=${projectId}&published=true`,
     fetcher,
     {
       onSuccess: (data) => !data?.project && router.push('/'),
     },
   );
 
-  const getIssues = async (p: number) => {
+  const getIssues = async (repoUrl: string, page: number) => {
     try {
       setLoading(true);
       setCurrentTask('Getting issues...');
 
+      const { user, repo } = parseRepoUrl(repoUrl);
       const res = await fetch(
-        `https://api.github.com/repos/pmndrs/jotai/issues?page=${p}&state=all`,
+        `https://api.github.com/repos/${user}/${repo}/issues?page=${page}&state=all`,
         {
           method: HttpMethod.GET,
           headers: {
@@ -88,10 +90,17 @@ export default function ProjectIndex() {
   async function handleButtonClick() {
     setLoading(true);
     const newData = [];
+
+    const repoUrl = data?.project?.repoUrl;
+
+    if (!repoUrl) {
+      throw new Error('Can not get repo URL');
+    }
+
     for (let p = 1; p <= 1; p++) {
       await new Promise((r) => setTimeout(r, 500));
-      const data = await getIssues(p);
-      newData.push(...data);
+      const newIssues = await getIssues(repoUrl, p);
+      newData.push(...newIssues);
       setPage(p);
       setCurrentTask(`Getting issues... (${page})`);
     }
@@ -115,10 +124,10 @@ export default function ProjectIndex() {
           'Write the summary of all given issues into one condensed paragraph',
       },
     ];
-    const res = await askGPT(messages);
-    if (res && res.choices) {
-      setAnswers(res.choices);
-    }
+    // const res = await askGPT(messages);
+    // if (res && res.choices) {
+    //   setAnswers(res.choices);
+    // }
     setLoading(false);
     setCurrentTask('');
   }
