@@ -43,8 +43,7 @@ type SettingsData = Pick<
 
 export default function ProjectSettings() {
   const router = useRouter();
-  const { id } = router.query;
-  const projectId = id;
+  const { id: projectId } = router.query;
 
   const toast = useToast({
     position: 'top-right',

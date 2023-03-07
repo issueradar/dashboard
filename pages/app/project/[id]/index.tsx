@@ -1,67 +1,50 @@
 import type { Project, Digest } from '@prisma/client';
-import useSWR from 'swr';
-import { Button, Flex, Text } from '@chakra-ui/react';
-import { HttpMethod, Message, CreateChatCompletionResponse } from '@/types';
-import Layout from '@/components/app/Layout';
-import { Link } from '@/components';
-import { RepeatIcon } from '@chakra-ui/icons';
-import { fetcher } from '@/lib/fetcher';
-import { parseRepoUrl } from '@/lib/url-parser';
+import useSWR, { mutate } from 'swr';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
+import { Button, Flex, Text, useToast } from '@chakra-ui/react';
+import { RepeatIcon } from '@chakra-ui/icons';
+import {
+  HttpMethod,
+  Message,
+  CreateChatCompletionResponse,
+  Issue,
+} from '@/types';
+import Layout from '@/components/app/Layout';
+import { fetcher } from '@/lib/fetcher';
+import { getIssues } from '@/lib/issue';
 
-// eslint-disable-next-line
-type UnknownData = Record<string, any>;
+type DigestInput = {
+  content: string;
+  projectId: string;
+};
 
-interface ProjectDigestData {
+type ProjectDigestData = {
   digests: Digest[];
   project: Project | null;
-}
+};
 
 export default function ProjectIndex() {
   const [isLoading, setLoading] = useState(false);
   const [currentTask, setCurrentTask] = useState('');
-  const [page, setPage] = useState(1);
-  const [issues, setIssues] = useState<UnknownData[]>([]);
   const [answers, setAnswers] = useState<
     CreateChatCompletionResponse['choices']
   >([]);
 
+  const toast = useToast();
   const router = useRouter();
   const { id: projectId } = router.query;
+  console.log('### projectId: ', { projectId });
 
   const { data } = useSWR<ProjectDigestData>(
-    projectId && `/api/digest?projectId=${projectId}&published=true`,
+    projectId && `/api/digest?projectId=${projectId}`,
     fetcher,
     {
       onSuccess: (data) => !data?.project && router.push('/'),
     },
   );
 
-  const getIssues = async (repoUrl: string, page: number) => {
-    try {
-      setLoading(true);
-      setCurrentTask('Getting issues...');
-
-      const { user, repo } = parseRepoUrl(repoUrl);
-      const res = await fetch(
-        `https://api.github.com/repos/${user}/${repo}/issues?page=${page}&state=all`,
-        {
-          method: HttpMethod.GET,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-
-      if (res.ok) {
-        const responseData = await res.json();
-        return responseData;
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  console.log('### data: ', { data });
 
   const askGPT = async (
     messages: Message[],
@@ -87,6 +70,36 @@ export default function ProjectIndex() {
     }
   };
 
+  async function saveDigest({ content, projectId }: DigestInput) {
+    setLoading(true);
+
+    try {
+      const response = await fetch(`/api/digest?projectId=${projectId}`, {
+        method: HttpMethod.POST,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content }),
+      });
+
+      if (response.ok) {
+        mutate(`/api/digest?projectId=${projectId}&published=true`);
+        toast({
+          title: 'Digest saved successfully!',
+          status: 'success',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Failed to save digest',
+        status: 'error',
+      });
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleButtonClick() {
     setLoading(true);
     const newData = [];
@@ -97,22 +110,20 @@ export default function ProjectIndex() {
       throw new Error('Can not get repo URL');
     }
 
-    for (let p = 1; p <= 1; p++) {
+    for (let page = 1; page <= 1; page++) {
       await new Promise((r) => setTimeout(r, 500));
-      const newIssues = await getIssues(repoUrl, p);
+      const newIssues: Issue[] = await getIssues({ repoUrl, page });
       newData.push(...newIssues);
-      setPage(p);
-      setCurrentTask(`Getting issues... (${page})`);
     }
-    setIssues(newData);
+
     const messages: Message[] = [
       {
         role: 'system',
         content:
-          'You are a senior and helpful technical analyst. You will read a given GitHub issue contents and summary it later',
+          'You are a senior and helpful technical analyst. You will read a list of GitHub issue with format "#issue ID# Issue title"',
       },
       ...newData.map<Message>((issue) => {
-        const content = `${issue.title} ${issue.body}`;
+        const content = `#${issue.id}# ${issue.title}`;
         return {
           role: 'assistant',
           content,
@@ -121,13 +132,23 @@ export default function ProjectIndex() {
       {
         role: 'user',
         content:
-          'Write the summary of all given issues into one condensed paragraph',
+          'Group all the issue titles into categories, and write the summary of each category',
       },
     ];
-    // const res = await askGPT(messages);
-    // if (res && res.choices) {
-    //   setAnswers(res.choices);
-    // }
+
+    const res = await askGPT(messages);
+
+    if (res?.choices?.[0]) {
+      setAnswers(res.choices);
+      const digestContent = res.choices[0].message?.content;
+
+      if (digestContent && projectId) {
+        await saveDigest({
+          content: digestContent,
+          projectId: projectId as string,
+        });
+      }
+    }
     setLoading(false);
     setCurrentTask('');
   }
@@ -158,56 +179,6 @@ export default function ProjectIndex() {
               <Text>{answer?.message?.content}</Text>
             </Flex>
           ))}
-        <div className="my-10 grid gap-y-10">
-          {issues ? (
-            issues.length > 0 ? (
-              issues.map((issue, index) => (
-                <Link href={`/issue/${issue.id}`} key={issue.id}>
-                  <Flex alignItems="center" maxWidth="100vw">
-                    <Flex maxWidth="100%">{index + 1}</Flex>
-                    <Flex padding={3} direction="column">
-                      <h2 className="font-cal text-xl">{issue.title}</h2>
-                      <Text noOfLines={3}>{issue.body}</Text>
-                    </Flex>
-                  </Flex>
-                </Link>
-              ))
-            ) : (
-              <>
-                <div className="flex flex-col md:flex-row md:h-60 rounded-lg overflow-hidden border border-gray-200">
-                  <div className="relative w-full h-60 md:h-auto md:w-1/3 md:flex-none bg-gray-300" />
-                  <div className="relative p-10 grid gap-5">
-                    <div className="w-28 h-10 rounded-md bg-gray-300" />
-                    <div className="w-48 h-6 rounded-md bg-gray-300" />
-                    <div className="w-48 h-6 rounded-md bg-gray-300" />
-                    <div className="w-48 h-6 rounded-md bg-gray-300" />
-                  </div>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-cal text-gray-600">
-                    No issues yet. Click &quot;Update&quot; to get it from
-                    GitHub.
-                  </p>
-                </div>
-              </>
-            )
-          ) : (
-            [0, 1].map((i) => (
-              <div
-                key={i}
-                className="flex flex-col md:flex-row md:h-60 rounded-lg overflow-hidden border border-gray-200"
-              >
-                <div className="relative w-full h-60 md:h-auto md:w-1/3 md:flex-none bg-gray-300 animate-pulse" />
-                <div className="relative p-10 grid gap-5">
-                  <div className="w-28 h-10 rounded-md bg-gray-300 animate-pulse" />
-                  <div className="w-48 h-6 rounded-md bg-gray-300 animate-pulse" />
-                  <div className="w-48 h-6 rounded-md bg-gray-300 animate-pulse" />
-                  <div className="w-48 h-6 rounded-md bg-gray-300 animate-pulse" />
-                </div>
-              </div>
-            ))
-          )}
-        </div>
       </Flex>
     </Layout>
   );

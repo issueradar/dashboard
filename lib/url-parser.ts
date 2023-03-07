@@ -1,7 +1,9 @@
+export type Provider = 'GITHUB' | 'GITLAB' | 'UNKNOWN';
+
 export type ParserResult = {
   repo: string;
   user: string;
-  provider: 'GITHUB' | 'GITLAB' | 'UNKNOWN';
+  provider: Provider;
 };
 
 export const initial: ParserResult = {
@@ -16,6 +18,9 @@ export const initial: ParserResult = {
  * @param {string} input The git url to parse, accepts HTTPS and SSH
  */
 export const repoUrlParser = (input = ''): ParserResult => {
+  if (input.length < 10) {
+    throw new Error('Invalid repo URL!');
+  }
   const link = input.trim().replace('https://', '').replace('.git', '');
 
   let result: ParserResult = initial;

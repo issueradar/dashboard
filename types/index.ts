@@ -3,6 +3,7 @@ export * from './cloudinary';
 export * from './common';
 export * from './http';
 export * from './icon';
+export * from './issue';
 export * from './openai';
 export * from './mdx';
 export * from './seo';

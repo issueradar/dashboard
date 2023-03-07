@@ -104,6 +104,7 @@ export async function createDigest(
   digestId: string;
 }>> {
   const { projectId } = req.query;
+  const { content } = req.body;
 
   if (!projectId || typeof projectId !== 'string' || !session?.user?.id) {
     return res
@@ -124,6 +125,7 @@ export async function createDigest(
   try {
     const response = await prisma.digest.create({
       data: {
+        content,
         project: {
           connect: {
             id: projectId,
