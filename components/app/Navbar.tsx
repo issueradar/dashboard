@@ -11,6 +11,7 @@ import {
 import { signOut } from 'next-auth/react';
 import type { Session } from 'next-auth';
 import { Image, Link } from '@/components';
+import { Logo } from '@/components/Logo';
 
 export type NavbarProps = {
   user: Session['user'];
@@ -31,9 +32,7 @@ export const Navbar = ({ user }: NavbarProps) => {
       <Container maxW="100vw" py={{ base: '1', lg: '2' }}>
         <HStack spacing="10" justify="space-between">
           <Link href="/" width={40} display="flex" alignItems="center">
-            <Text fontSize="lg" fontWeight="bold">
-              IssueRadar
-            </Text>
+            <Logo width={120} />
           </Link>
 
           <Flex justify="space-between" flex="1">

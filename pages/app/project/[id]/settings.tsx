@@ -1,29 +1,34 @@
 import { useDebounce } from 'use-debounce';
 import { useRouter } from 'next/router';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Alert,
   AlertDescription,
+  AlertDialog,
+  AlertDialogBody,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogOverlay,
   AlertIcon,
   Box,
   Button,
   Container,
   Divider,
-  Flex,
   FormControl,
   FormErrorMessage,
   FormLabel,
   Input,
+  Stack,
   Text,
   Textarea,
+  useDisclosure,
   useToast,
 } from '@chakra-ui/react';
 import useSWR, { mutate } from 'swr';
 import type { Project } from '@prisma/client';
 
 import Layout from '@/components/app/Layout';
-import LoadingDots from '@/components/app/loading-dots';
-import Modal from '@/components/Modal';
 import { fetcher } from '@/lib/fetcher';
 import { HttpMethod } from '@/types';
 
@@ -51,6 +56,9 @@ export default function ProjectSettings() {
     variant: 'subtle',
   });
 
+  const cancelRef = useRef(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
+
   const { data: settings } = useSWR<Project | null>(
     projectId && `/api/project?projectId=${projectId}`,
     fetcher,
@@ -61,7 +69,6 @@ export default function ProjectSettings() {
   );
 
   const [saving, setSaving] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingProject, setDeletingProject] = useState(false);
 
   const [data, setData] = useState<SettingsData>({
@@ -166,8 +173,8 @@ export default function ProjectSettings() {
             Project Settings
           </Text>
 
-          <Flex direction="column">
-            <FormControl mt={4}>
+          <Stack spacing={4}>
+            <FormControl>
               <FormLabel>Project name</FormLabel>
               <Input
                 name="Project name"
@@ -182,7 +189,7 @@ export default function ProjectSettings() {
               />
             </FormControl>
 
-            <FormControl mt={4}>
+            <FormControl>
               <FormLabel>Repo URL</FormLabel>
               <Input
                 name="Repo URL"
@@ -197,7 +204,7 @@ export default function ProjectSettings() {
               />
             </FormControl>
 
-            <FormControl mt={4}>
+            <FormControl>
               <FormLabel>Description</FormLabel>
               <Textarea
                 name="Description"
@@ -212,7 +219,7 @@ export default function ProjectSettings() {
               />
             </FormControl>
 
-            <FormControl mt={4} isInvalid={!!subdomainError}>
+            <FormControl isInvalid={!!subdomainError}>
               <FormLabel>Subdomain</FormLabel>
               <Input
                 name="subdomain"
@@ -231,9 +238,9 @@ export default function ProjectSettings() {
                 </FormErrorMessage>
               )}
             </FormControl>
-          </Flex>
+          </Stack>
 
-          <Box marginY={4}>
+          <Box marginY={8}>
             <Button
               isLoading={saving}
               loadingText="Saving..."
@@ -255,11 +262,7 @@ export default function ProjectSettings() {
               caution.
             </AlertDescription>
             <Box marginLeft={3}>
-              <Button
-                colorScheme="red"
-                size="xs"
-                onClick={() => setShowDeleteModal(true)}
-              >
+              <Button colorScheme="red" size="xs" onClick={onOpen}>
                 Delete Project
               </Button>
             </Box>
@@ -267,54 +270,50 @@ export default function ProjectSettings() {
         </Container>
       </Layout>
 
-      <Modal showModal={showDeleteModal} setShowModal={setShowDeleteModal}>
-        <form
-          onSubmit={async (event) => {
-            event.preventDefault();
-            await deleteProject(projectId as string);
-          }}
-          className="inline-block w-full max-w-md pt-8 overflow-hidden text-center align-middle transition-all bg-white shadow-xl rounded-lg"
-        >
-          <h2 className="font-cal text-2xl mb-6">Delete Project</h2>
-          <div className="grid gap-y-5 w-5/6 mx-auto">
-            <p className="text-gray-600 mb-3">
+      <AlertDialog
+        isOpen={isOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={onClose}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader fontSize="lg" fontWeight="bold">
+              Delete Project
+            </AlertDialogHeader>
+
+            <AlertDialogBody>
               Are you sure you want to delete your project? This action is not
               reversible. Type in the full name of your project (
               <b>{data.name}</b>) to confirm.
-            </p>
-            <div className="border border-gray-700 rounded-lg flex flex-start items-center overflow-hidden">
-              <input
-                className="w-full px-5 py-3 text-gray-700 bg-white border-none focus:outline-none focus:ring-0 rounded-none rounded-r-lg placeholder-gray-400"
+              <Input
                 type="text"
                 name="name"
                 placeholder={data.name ?? ''}
                 pattern={data.name ?? 'Project Name'}
+                marginTop={4}
               />
-            </div>
-          </div>
-          <div className="flex justify-between items-center mt-10 w-full">
-            <button
-              type="button"
-              className="w-full px-5 py-5 text-sm text-gray-400 hover:text-black border-t border-gray-300 rounded-bl focus:outline-none focus:ring-0 transition-all ease-in-out duration-150"
-              onClick={() => setShowDeleteModal(false)}
-            >
-              CANCEL
-            </button>
+            </AlertDialogBody>
 
-            <button
-              type="submit"
-              disabled={deletingProject}
-              className={`${
-                deletingProject
-                  ? 'cursor-not-allowed text-gray-400 bg-gray-50'
-                  : 'bg-white text-gray-600 hover:text-black'
-              } w-full px-5 py-5 text-sm border-t border-l border-gray-300 rounded-br focus:outline-none focus:ring-0 transition-all ease-in-out duration-150`}
-            >
-              {deletingProject ? <LoadingDots /> : 'DELETE PROJECT'}
-            </button>
-          </div>
-        </form>
-      </Modal>
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={onClose}>
+                Cancel
+              </Button>
+              <Button
+                ml={3}
+                colorScheme="red"
+                disabled={deletingProject}
+                isLoading={deletingProject}
+                loadingText="Deleting..."
+                onClick={async () => {
+                  await deleteProject(projectId as string);
+                }}
+              >
+                Delete
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </>
   );
 }

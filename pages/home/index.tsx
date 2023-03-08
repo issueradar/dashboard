@@ -1,5 +1,4 @@
 import {
-  Box,
   Button,
   Center,
   Container,
@@ -38,10 +37,14 @@ export default function Home() {
 
           <Center>
             <HStack spacing={5}>
-              <Button colorScheme="green">Request Access</Button>
+              <Button colorScheme="green" size="lg">
+                Request Early Access
+              </Button>
+
               <Button
                 colorScheme="green"
                 variant="outline"
+                size="sm"
                 rightIcon={<ArrowForwardIcon />}
               >
                 Login
