@@ -54,6 +54,9 @@ export async function getProject(
           id: session.user.id,
         },
       },
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
 
     return res.status(200).json(projects);

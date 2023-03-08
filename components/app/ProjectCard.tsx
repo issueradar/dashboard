@@ -20,7 +20,7 @@ export const ProjectCard = ({ project }: ProjectCardProps) => {
         <Link href={`/project/${project.id}`}>
           <Heading size="md">{project.name}</Heading>
         </Link>
-        <Text fontSize="sm">{project.repoUrl}</Text>
+        <Text fontSize="xs">{`${project.createdAt}`}</Text>
       </CardHeader>
       <CardBody>
         <Text>{project.description}</Text>

@@ -179,22 +179,29 @@ export default function ProjectIndex() {
           </Button>
         </Flex>
 
-        {isLoading && (
-          <SkeletonText noOfLines={6} spacing="3" skeletonHeight="4" />
-        )}
+        <Box maxW="50%">
+          {(isLoading || isWorking) && (
+            <SkeletonText
+              marginY={4}
+              noOfLines={6}
+              spacing="3"
+              skeletonHeight="4"
+            />
+          )}
 
-        {data?.digests?.content && !isLoading ? (
-          <Box marginY={4} className="digest-markdown">
-            <ReactMarkdown>{data.digests.content}</ReactMarkdown>
-          </Box>
-        ) : (
-          <Center>
-            <Text fontSize="sm" fontStyle="italic">
-              Do not have any recent report. Click &quot;Update&quot; button to
-              get it.
-            </Text>
-          </Center>
-        )}
+          {data?.digests?.content && !isLoading ? (
+            <Box marginY={4} className="digest-markdown">
+              <ReactMarkdown>{data.digests.content}</ReactMarkdown>
+            </Box>
+          ) : (
+            <Center>
+              <Text fontSize="sm" fontStyle="italic">
+                Do not have any recent report. Click &quot;Update&quot; button
+                to get it.
+              </Text>
+            </Center>
+          )}
+        </Box>
       </Flex>
     </Layout>
   );
