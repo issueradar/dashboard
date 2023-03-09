@@ -23,12 +23,8 @@ export default async function middleware(req: NextRequest) {
   // Get the pathname of the request (e.g. /, /about, /blog/first-post)
   const path = url.pathname;
 
-  // Only for demo purposes - remove this if you want to use your root domain as the landing page
-  // if (hostname === 'issueradar.com' || hostname === 'platforms.vercel.app') {
-  //   return NextResponse.redirect('https://demo.issueradar.com');
-  // }
-
   /*  Do note that we'll still need to add "*.issueradar.vercel.app" as a wildcard domain on our Vercel dashboard. */
+  // Returns `app` or `subdomain`
   const currentHost =
     process.env.NODE_ENV === 'production' && process.env.VERCEL === '1'
       ? hostname
@@ -37,7 +33,7 @@ export default async function middleware(req: NextRequest) {
       : hostname.replace(`.localhost:3000`, '');
 
   // rewrites for app pages
-  if (currentHost == 'app') {
+  if (currentHost === 'app') {
     if (
       url.pathname === '/login' &&
       (req.cookies.get('next-auth.session-token') ||
@@ -52,7 +48,11 @@ export default async function middleware(req: NextRequest) {
   }
 
   // rewrite root application to `/home` folder
-  if (hostname === 'localhost:3000' || hostname === 'issueradar.vercel.app') {
+  if (
+    ['localhost:3000', 'issueradar.vercel.app', 'issueradar.com'].includes(
+      hostname,
+    )
+  ) {
     return NextResponse.rewrite(new URL(`/home${path}`, req.url));
   }
 
