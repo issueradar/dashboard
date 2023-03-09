@@ -169,11 +169,11 @@ export default function ProjectSettings() {
     <>
       <Layout projectId={projectId as string}>
         <Container>
-          <Text as="h2" fontSize="2xl" fontWeight="bold">
-            Project Settings
-          </Text>
-
           <Stack spacing={4}>
+            <Text as="h2" fontSize="2xl" fontWeight="bold">
+              Project Settings
+            </Text>
+
             <FormControl>
               <FormLabel>Project name</FormLabel>
               <Input
