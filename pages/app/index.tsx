@@ -3,7 +3,7 @@ import useSWR from 'swr';
 import { useDebounce } from 'react-use';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
-import { useState, useEffect, useRef } from 'react';
+import { useRef, useReducer } from 'react';
 import {
   Box,
   Button,
@@ -13,6 +13,7 @@ import {
   FormLabel,
   Input,
   InputGroup,
+  InputRightAddon,
   InputRightElement,
   Modal,
   ModalBody,
@@ -22,67 +23,60 @@ import {
   ModalHeader,
   ModalOverlay,
   SimpleGrid,
+  Spinner,
   useDisclosure,
 } from '@chakra-ui/react';
-import { CheckIcon, AddIcon } from '@chakra-ui/icons';
+import { CheckIcon, AddIcon, WarningTwoIcon } from '@chakra-ui/icons';
 import Layout from '@/components/app/Layout';
 import { ProjectCard } from '@/components/app/ProjectCard';
 import { fetcher } from '@/lib/fetcher';
-import { parseRepoUrl, initial } from '@/lib/url-parser';
+import { parseRepoUrl, initial as initialParsed } from '@/lib/url-parser';
 import { useToast } from '@/lib/hooks';
 import { HttpMethod } from '@/types';
 
+const currentHost =
+  process.env.NODE_ENV === 'production' ? '.issueradar.com' : '.localhost:3000';
+
+const initialState = {
+  isCreating: false,
+  isCheckingSubdomain: false,
+  isManuallyEdited: false,
+  customisedSubdomain: false,
+  subdomain: '',
+  error: '',
+  repoUrl: '',
+  parsedRepo: initialParsed,
+  projectName: '',
+};
+
+type State = typeof initialState;
+type Action =
+  | {
+      key: keyof State;
+      value: State[keyof State];
+    }
+  | {
+      key?: undefined;
+      value: Partial<State>;
+    }
+  | { key: 'reset'; value?: undefined };
+
+const reducer = (state: State, { key, value }: Action) => {
+  if (key === 'reset') return initialState;
+
+  if (key === undefined && typeof value === 'object') {
+    return { ...state, ...value };
+  }
+
+  return { ...state, [key as string]: value };
+};
+
 export default function AppIndex() {
-  const [isCreating, setCreating] = useState(false);
-  const [subdomain, setSubdomain] = useState('');
-  const [error, setError] = useState<string | null>(null);
-
-  const [repoUrl, setRepoUrl] = useState('');
-  const [parsedRepo, setParsedRepo] = useState(initial);
-  const [projectName, setProjectName] = useState('');
-
-  const [isManuallyEdited, setManuallyEdited] = useState(false);
   const initialRef = useRef(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   const toast = useToast();
-
-  useDebounce(
-    () => {
-      const { user, repo, provider } = parseRepoUrl(repoUrl);
-
-      setParsedRepo({ user, repo, provider });
-
-      if (!isManuallyEdited) {
-        if (provider !== 'UNKNOWN') {
-          setProjectName(`${user}/${repo}`);
-        }
-
-        if (!error) {
-          setSubdomain(repo);
-        }
-      }
-    },
-    1000,
-    [repoUrl],
-  );
-
-  useEffect(() => {
-    async function checkSubDomain() {
-      if (subdomain) {
-        const response = await fetch(
-          `/api/domain/check?domain=${subdomain}&subdomain=1`,
-        );
-        const available = await response.json();
-        if (available) {
-          setError(null);
-        } else {
-          setError(`${subdomain}.vercel.pub is taken`);
-        }
-      }
-    }
-    checkSubDomain();
-  }, [subdomain]);
 
   const router = useRouter();
 
@@ -94,8 +88,43 @@ export default function AppIndex() {
     fetcher,
   );
 
+  useDebounce(
+    async () => {
+      const { user, repo, provider } = parseRepoUrl(state.repoUrl);
+
+      dispatch({ key: 'parsedRepo', value: { user, repo, provider } });
+
+      if (state.subdomain) {
+        const response = await fetch(
+          `/api/domain/check?domain=${state.subdomain}&subdomain=1`,
+        );
+
+        const available = await response.json();
+        if (available) {
+          dispatch({ value: { error: '' } });
+        } else {
+          dispatch({
+            value: { error: `${state.subdomain}${currentHost} is taken` },
+          });
+        }
+      }
+
+      if (!state.isManuallyEdited) {
+        if (provider !== 'UNKNOWN') {
+          dispatch({ key: 'projectName', value: `${user}/${repo}` });
+        }
+
+        if (!state.error) {
+          dispatch({ value: { subdomain: user } });
+        }
+      }
+    },
+    1000,
+    [state.repoUrl, state.isManuallyEdited, state.subdomain],
+  );
+
   async function handleCreateProject() {
-    setCreating(true);
+    dispatch({ value: { isCreating: true } });
     const res = await fetch('/api/project', {
       method: HttpMethod.POST,
       headers: {
@@ -103,9 +132,9 @@ export default function AppIndex() {
       },
       body: JSON.stringify({
         userId: sessionId,
-        name: projectName,
-        repoUrl: repoUrl,
-        subdomain: subdomain,
+        name: state.projectName,
+        repoUrl: state.repoUrl,
+        subdomain: state.subdomain,
       }),
     });
 
@@ -116,12 +145,23 @@ export default function AppIndex() {
     const data = await res.json();
 
     toast({ title: 'Project created successfully!', status: 'success' });
-    setCreating(false);
+
+    dispatch({ value: { isCreating: false } });
 
     router.push(`/project/${data.projectId}`);
   }
 
-  const shouldDisableCreating = !repoUrl && !projectName;
+  const handleModalClose = () => {
+    dispatch({ key: 'reset' });
+    onClose();
+  };
+
+  const shouldDisableCreating =
+    !state.repoUrl ||
+    !state.projectName ||
+    !state.subdomain ||
+    !!state.error ||
+    state.parsedRepo.provider === 'UNKNOWN';
 
   return (
     <>
@@ -187,10 +227,10 @@ export default function AppIndex() {
         closeOnOverlayClick={false}
         initialFocusRef={initialRef}
         isOpen={isOpen}
-        onClose={onClose}
+        onClose={handleModalClose}
       >
         <ModalOverlay />
-        <ModalContent>
+        <ModalContent top="4rem">
           <ModalHeader>Create new project</ModalHeader>
           <ModalCloseButton />
           <ModalBody pb={6}>
@@ -200,12 +240,18 @@ export default function AppIndex() {
                 <Input
                   ref={initialRef}
                   placeholder="https//github.com/<user>/<repo>.git"
-                  value={repoUrl}
-                  onChange={(e) => setRepoUrl(e.target.value)}
+                  value={state.repoUrl}
+                  onChange={(e) =>
+                    dispatch({ key: 'repoUrl', value: e.target.value })
+                  }
                 />
-                {parsedRepo.provider !== 'UNKNOWN' && (
+                {state.repoUrl && (
                   <InputRightElement>
-                    <CheckIcon color="green.500" />
+                    {state.parsedRepo.provider !== 'UNKNOWN' ? (
+                      <CheckIcon color="green.500" />
+                    ) : (
+                      <WarningTwoIcon color="red.400" />
+                    )}
                   </InputRightElement>
                 )}
               </InputGroup>
@@ -215,33 +261,46 @@ export default function AppIndex() {
               <FormLabel>Project name</FormLabel>
               <Input
                 placeholder="user/repo"
-                value={projectName}
+                value={state.projectName}
                 onChange={(e) => {
-                  setManuallyEdited(true);
-                  setProjectName(e.target.value);
+                  dispatch({
+                    value: {
+                      isManuallyEdited: true,
+                      projectName: e.target.value,
+                    },
+                  });
                 }}
               />
             </FormControl>
 
-            {(isManuallyEdited || error) && (
-              <FormControl mt={4} isInvalid={!!error}>
-                <FormLabel>Subdomain</FormLabel>
+            <FormControl mt={4} isInvalid={!!state.error}>
+              <FormLabel>Subdomain</FormLabel>
+              <InputGroup>
                 <Input
                   placeholder="repo"
-                  value={subdomain}
+                  value={state.subdomain}
                   onChange={(e) => {
-                    setManuallyEdited(true);
-                    setSubdomain(e.target.value);
+                    dispatch({
+                      value: {
+                        isManuallyEdited: true,
+                        subdomain: e.target.value,
+                      },
+                    });
                   }}
                 />
-                {error && <FormErrorMessage>{error}</FormErrorMessage>}
-              </FormControl>
-            )}
+                <InputRightAddon>{currentHost}</InputRightAddon>
+              </InputGroup>
+              {state.error && (
+                <FormErrorMessage>{state.error}</FormErrorMessage>
+              )}
+            </FormControl>
           </ModalBody>
 
           <ModalFooter>
+            {state.isCheckingSubdomain && <Spinner />}
+
             <Button
-              isLoading={isCreating}
+              isLoading={state.isCreating}
               isDisabled={shouldDisableCreating}
               colorScheme="blue"
               mr={3}
@@ -249,7 +308,7 @@ export default function AppIndex() {
             >
               Create
             </Button>
-            <Button onClick={onClose}>Cancel</Button>
+            <Button onClick={handleModalClose}>Cancel</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>

@@ -1,5 +1,7 @@
+import { unstable_getServerSession } from 'next-auth/next';
 import prisma from '@/lib/prisma';
 import { HttpMethod } from '@/types';
+import { authOptions } from '../auth/[...nextauth]';
 
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -15,6 +17,8 @@ export default async function post(req: NextApiRequest, res: NextApiResponse) {
     res.setHeader('Allow', [HttpMethod.GET]);
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
+  const session = await unstable_getServerSession(req, res, authOptions);
+  if (!session) return res.status(401).end();
 
   const { domain, subdomain = false } = req.query;
 
@@ -33,7 +37,10 @@ export default async function post(req: NextApiRequest, res: NextApiResponse) {
         },
       });
 
-      const available = data === null && sub.length !== 0;
+      const available =
+        !['app'].includes(domain as string) &&
+        (data === null || data.userId === session.user?.id) &&
+        sub.length !== 0;
 
       return res.status(200).json(available);
     }

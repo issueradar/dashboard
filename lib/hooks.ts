@@ -8,7 +8,6 @@ export const useToast = (options?: UseToastOptions) => {
     position: 'top-right',
     duration: 3000,
     isClosable: true,
-    variant: 'subtle',
     ...(options ?? {}),
   };
 
