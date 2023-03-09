@@ -29,6 +29,7 @@ import Layout from '@/components/app/Layout';
 import { ProjectCard } from '@/components/app/ProjectCard';
 import { fetcher } from '@/lib/fetcher';
 import { parseRepoUrl, initial } from '@/lib/url-parser';
+import { useToast } from '@/lib/hooks';
 import { HttpMethod } from '@/types';
 
 export default function AppIndex() {
@@ -43,6 +44,8 @@ export default function AppIndex() {
   const [isManuallyEdited, setManuallyEdited] = useState(false);
   const initialRef = useRef(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const toast = useToast();
 
   useDebounce(
     () => {
@@ -86,7 +89,7 @@ export default function AppIndex() {
   const { data: session } = useSession();
   const sessionId = session?.user?.id;
 
-  const { data: projects } = useSWR<Array<Project>>(
+  const { data: projects, isLoading } = useSWR<Array<Project>>(
     sessionId && `/api/project`,
     fetcher,
   );
@@ -107,11 +110,14 @@ export default function AppIndex() {
     });
 
     if (!res.ok) {
-      alert('Failed to create project');
+      toast({ title: 'Failed to create project', status: 'error' });
     }
 
     const data = await res.json();
+
+    toast({ title: 'Project created successfully!', status: 'success' });
     setCreating(false);
+
     router.push(`/project/${data.projectId}`);
   }
 
@@ -128,7 +134,7 @@ export default function AppIndex() {
           </Flex>
 
           <Box>
-            {projects ? (
+            {projects && !isLoading ? (
               projects.length > 0 ? (
                 <SimpleGrid
                   spacing={4}

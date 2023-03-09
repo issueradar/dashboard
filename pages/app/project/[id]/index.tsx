@@ -179,7 +179,7 @@ export default function ProjectIndex() {
           </Button>
         </Flex>
 
-        <Box maxW="50%">
+        <Box maxW={{ base: '70%', lg: '50%' }}>
           {(isLoading || isWorking) && (
             <SkeletonText
               marginY={4}
