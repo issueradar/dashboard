@@ -29,11 +29,9 @@ export const Navbar = ({ user }: NavbarProps) => {
       borderBottom="1px"
       borderBottomColor={borderColor}
     >
-      <Container maxW="100vw" py={{ base: '1', lg: '2' }}>
+      <Container maxW="100vw">
         <HStack spacing="10" justify="space-between">
-          <Link href="/" width={40} display="flex" alignItems="center">
-            <Logo width={120} />
-          </Link>
+          <Logo width={120} />
 
           <Flex justify="space-between" flex="1">
             <ButtonGroup size="sm" variant="link" spacing="8">
