@@ -68,7 +68,13 @@ export const Navbar = ({ user }: NavbarProps) => {
                 </Text>
               </Link>
 
-              <Button size="sm" variant="link" onClick={() => signOut()}>
+              <Button
+                size="sm"
+                variant="link"
+                // Read more:
+                // https://next-auth.js.org/getting-started/client#using-the-redirect-false-option-1
+                onClick={() => signOut({ redirect: false })}
+              >
                 Logout
               </Button>
             </HStack>

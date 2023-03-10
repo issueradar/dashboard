@@ -40,10 +40,12 @@ export default async function middleware(req: NextRequest) {
         req.cookies.get('__Secure-next-auth.session-token'))
     ) {
       url.pathname = '/';
+
       return NextResponse.redirect(url);
     }
 
     url.pathname = `/app${url.pathname}`;
+
     return NextResponse.rewrite(url);
   }
 

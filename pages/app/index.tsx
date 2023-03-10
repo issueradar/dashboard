@@ -239,7 +239,7 @@ export default function AppIndex() {
               <InputGroup>
                 <Input
                   ref={initialRef}
-                  placeholder="https//github.com/<user>/<repo>.git"
+                  placeholder="https//github.com/user/repo.git"
                   value={state.repoUrl}
                   onChange={(e) =>
                     dispatch({ key: 'repoUrl', value: e.target.value })

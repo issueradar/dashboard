@@ -5,7 +5,6 @@ import { Box, Container, Flex, Skeleton, Text } from '@chakra-ui/react';
 import { useRouter } from 'next/router';
 import useRequireAuth from '@/lib/useRequireAuth';
 import { CustomHead } from '@/components/app/CustomHead';
-import Loader from './Loader';
 import { Navbar } from './Navbar';
 import { Footer } from './Footer';
 import { ProjectNavbar } from './ProjectNavbar';
@@ -17,7 +16,10 @@ interface LayoutProps extends WithChildren {
 }
 
 export default function Layout({ children, projectId }: LayoutProps) {
+  const session = useRequireAuth();
+
   const router = useRouter();
+
   const projectPage = router.pathname.startsWith('/app/project/[id]');
   const rootPage = !projectPage;
   const tab = rootPage
@@ -49,8 +51,7 @@ export default function Layout({ children, projectId }: LayoutProps) {
     return 'Loading...';
   };
 
-  const session = useRequireAuth();
-  if (!session) return <Loader />;
+  if (!session) return null;
 
   return (
     <>
