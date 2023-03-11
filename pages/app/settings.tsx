@@ -19,7 +19,6 @@ import type { UserSettings } from '@/types';
 
 export default function AppSettings() {
   const { data: session } = useSession();
-  console.log('### session: ', { session });
 
   const toast = useToast({
     position: 'top-right',

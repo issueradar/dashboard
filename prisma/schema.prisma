@@ -11,6 +11,11 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum UserRole {
+  USER
+  ADMIN
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -22,11 +27,13 @@ model User {
   image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  role          UserRole  @default(USER)
   accounts      Account[]
   sessions      Session[]
   projects      Project[]
 }
 
+// This is GitHub account
 model Account {
   id                       String  @id @default(cuid())
   userId                   String
@@ -112,8 +119,8 @@ model Project {
   customDomain  String?  @unique
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  user          User?    @relation(fields: [userId], references: [id])
   userId        String?
+  user          User?    @relation(fields: [userId], references: [id])
   posts         Post[]
   digests       Digest[]
 

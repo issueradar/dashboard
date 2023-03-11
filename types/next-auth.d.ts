@@ -1,6 +1,6 @@
 // eslint-disable-next-line
 import NextAuth from 'next-auth';
-import type { Level } from '.prisma/client';
+import type { UserRole } from '.prisma/client';
 
 declare module 'next-auth' {
   interface Session {
@@ -37,6 +37,6 @@ declare module 'next-auth' {
     /**
      * The user's level of using
      */
-    levels?: Level[];
+    role?: UserRole;
   }
 }

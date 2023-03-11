@@ -5,8 +5,9 @@ import prisma from '@/lib/prisma';
 
 const VERCEL_DEPLOYMENT = !!process.env.VERCEL_URL;
 
-if (!process.env.GITHUB_ID || !process.env.GITHUB_SECRET)
+if (!process.env.GITHUB_ID || !process.env.GITHUB_SECRET) {
   throw new Error('Failed to initialize Github authentication');
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -44,14 +45,17 @@ export const authOptions: NextAuthOptions = {
     },
   },
   callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-        username: user.username,
-      },
-    }),
+    session: ({ session, user }) => {
+      return {
+        ...session,
+        user: {
+          ...session.user,
+          id: user.id,
+          username: user.username,
+          role: user.role,
+        },
+      };
+    },
   },
 };
 
