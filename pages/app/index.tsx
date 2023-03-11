@@ -5,6 +5,8 @@ import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 import { useRef, useReducer } from 'react';
 import {
+  Alert,
+  AlertIcon,
   Box,
   Button,
   Flex,
@@ -25,6 +27,7 @@ import {
   SimpleGrid,
   Spinner,
   useDisclosure,
+  Highlight,
 } from '@chakra-ui/react';
 import { CheckIcon, AddIcon, WarningTwoIcon } from '@chakra-ui/icons';
 import Layout from '@/components/app/Layout';
@@ -32,6 +35,7 @@ import { ProjectCard } from '@/components/app/ProjectCard';
 import { fetcher } from '@/lib/fetcher';
 import { parseRepoUrl, initial as initialParsed } from '@/lib/url-parser';
 import { useToast } from '@/lib/hooks';
+import { limits } from '@/lib/constants';
 import { HttpMethod } from '@/types';
 
 const currentHost =
@@ -156,7 +160,10 @@ export default function AppIndex() {
     onClose();
   };
 
-  const shouldDisableCreating =
+  const shouldDisableCreatingNewProject =
+    (projects?.length ?? 0) >= limits[session?.user.role ?? 'USER'].maxProjects;
+
+  const shouldDisableConfirmButton =
     !state.repoUrl ||
     !state.projectName ||
     !state.subdomain ||
@@ -167,8 +174,38 @@ export default function AppIndex() {
     <>
       <Layout>
         <Flex direction="column">
-          <Flex marginBottom={4} justifyContent="end">
-            <Button colorScheme="green" leftIcon={<AddIcon />} onClick={onOpen}>
+          <Flex
+            marginBottom={4}
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            {shouldDisableCreatingNewProject ? (
+              <Box>
+                <Alert status="error">
+                  <AlertIcon />
+                  <Highlight
+                    query="3 projects"
+                    styles={{
+                      px: '2',
+                      py: '1',
+                      rounded: 'full',
+                      bg: 'white.200',
+                    }}
+                  >
+                    Currently we support only 3 projects limit, we will try to
+                    support more in the future.
+                  </Highlight>
+                </Alert>
+              </Box>
+            ) : (
+              <span />
+            )}
+            <Button
+              isDisabled={shouldDisableCreatingNewProject}
+              colorScheme="green"
+              leftIcon={<AddIcon />}
+              onClick={onOpen}
+            >
               New Project
             </Button>
           </Flex>
@@ -301,7 +338,7 @@ export default function AppIndex() {
 
             <Button
               isLoading={state.isCreating}
-              isDisabled={shouldDisableCreating}
+              isDisabled={shouldDisableConfirmButton}
               colorScheme="blue"
               mr={3}
               onClick={handleCreateProject}

@@ -69,6 +69,8 @@ export default function ProjectSettings() {
   );
 
   const [saving, setSaving] = useState(false);
+
+  const [confirmName, setConfirmName] = useState('');
   const [deletingProject, setDeletingProject] = useState(false);
 
   const [data, setData] = useState<SettingsData>({
@@ -164,6 +166,8 @@ export default function ProjectSettings() {
     )
       checkSubdomain();
   }, [debouncedSubdomain, settings?.subdomain]);
+
+  const shouldDisableConfirmButton = data.name !== confirmName;
 
   return (
     <>
@@ -289,8 +293,9 @@ export default function ProjectSettings() {
                 type="text"
                 name="name"
                 placeholder={data.name ?? ''}
-                pattern={data.name ?? 'Project Name'}
+                value={confirmName}
                 marginTop={4}
+                onChange={(e) => setConfirmName(e.target.value)}
               />
             </AlertDialogBody>
 
@@ -301,7 +306,7 @@ export default function ProjectSettings() {
               <Button
                 ml={3}
                 colorScheme="red"
-                disabled={deletingProject}
+                isDisabled={shouldDisableConfirmButton}
                 isLoading={deletingProject}
                 loadingText="Deleting..."
                 onClick={async () => {
