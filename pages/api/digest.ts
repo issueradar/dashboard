@@ -1,4 +1,4 @@
-import { unstable_getServerSession } from 'next-auth/next';
+import { getServerSession } from 'next-auth/next';
 import { createDigest, deleteDigest, getDigest, updateDigest } from '@/lib/api';
 
 import { authOptions } from './auth/[...nextauth]';
@@ -10,7 +10,7 @@ export default async function digest(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
-  const session = await unstable_getServerSession(req, res, authOptions);
+  const session = await getServerSession(req, res, authOptions);
   if (!session) return res.status(401).end();
 
   switch (req.method) {

@@ -1,8 +1,6 @@
 import prisma from '@/lib/prisma';
 
 import { NextApiRequest, NextApiResponse } from 'next';
-// import { unstable_getServerSession } from 'next-auth/next';
-// import { authOptions } from 'pages/api/auth/[...nextauth]';
 import type { Post, Project } from '.prisma/client';
 import type { Session } from 'next-auth';
 import { revalidate } from '@/lib/revalidate';

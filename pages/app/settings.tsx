@@ -19,6 +19,7 @@ import type { UserSettings } from '@/types';
 
 export default function AppSettings() {
   const { data: session } = useSession();
+  console.log('### session: ', { session });
 
   const toast = useToast({
     position: 'top-right',
@@ -31,10 +32,7 @@ export default function AppSettings() {
   const [data, setData] = useState<UserSettings | null>(null);
 
   useEffect(() => {
-    if (session)
-      setData({
-        ...session.user,
-      });
+    if (session) setData(session.user);
   }, [session]);
 
   async function saveSettings(data: UserSettings | null) {

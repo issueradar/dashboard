@@ -1,6 +1,6 @@
 import cuid from 'cuid';
 import { NextApiRequest, NextApiResponse } from 'next';
-import { unstable_getServerSession } from 'next-auth/next';
+import { getServerSession } from 'next-auth/next';
 import { authOptions } from 'pages/api/auth/[...nextauth]';
 import prisma from '@/lib/prisma';
 
@@ -129,7 +129,7 @@ export async function deleteProject(
   req: NextApiRequest,
   res: NextApiResponse,
 ): Promise<void | NextApiResponse> {
-  const session = await unstable_getServerSession(req, res, authOptions);
+  const session = await getServerSession(req, res, authOptions);
   if (!session?.user.id) return res.status(401).end('Unauthorized');
   const { projectId } = req.query;
 
@@ -196,7 +196,7 @@ export async function updateProject(
   req: NextApiRequest,
   res: NextApiResponse,
 ): Promise<void | NextApiResponse<Project>> {
-  const session = await unstable_getServerSession(req, res, authOptions);
+  const session = await getServerSession(req, res, authOptions);
   if (!session?.user.id) return res.status(401).end('Unauthorized');
 
   const { id, currentSubdomain, ...rest } = req.body;
