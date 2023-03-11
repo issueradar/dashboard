@@ -1,13 +1,17 @@
 import type { Project, Digest } from '@prisma/client';
 import ReactMarkdown from 'react-markdown';
+import { useSession } from 'next-auth/react';
 import useSWR, { mutate } from 'swr';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import {
+  Alert,
+  AlertIcon,
   Box,
   Button,
   Center,
   Flex,
+  Highlight,
   SkeletonText,
   Text,
   useToast,
@@ -22,6 +26,7 @@ import {
 import Layout from '@/components/app/Layout';
 import { fetcher } from '@/lib/fetcher';
 import { getIssues } from '@/lib/issue';
+import { limits } from '@/lib/constants';
 
 type DigestInput = {
   content: string;
@@ -30,6 +35,7 @@ type DigestInput = {
 
 type ProjectDigestData = {
   digests: Digest;
+  totalDigests: number;
   project: Project | null;
 };
 
@@ -40,6 +46,8 @@ export default function ProjectIndex() {
   const toast = useToast();
   const router = useRouter();
   const { id: projectId } = router.query;
+
+  const { data: session } = useSession();
 
   const { data, isLoading } = useSWR<ProjectDigestData>(
     projectId && `/api/digest?projectId=${projectId}`,
@@ -163,19 +171,47 @@ export default function ProjectIndex() {
     setCurrentTask('');
   }
 
+  const maxDigests = limits[session?.user.role ?? 'USER'].maxDigests;
+
+  const shouldDisableDigestButton = (data?.totalDigests ?? 0) >= maxDigests;
+
   return (
     <Layout projectId={projectId as string}>
       <Flex direction="column">
-        <Flex justifyContent="end">
+        <Flex
+          marginBottom={4}
+          alignItems="center"
+          justifyContent="space-between"
+        >
+          {shouldDisableDigestButton ? (
+            <Box>
+              <Alert status="error">
+                <AlertIcon />
+                <Highlight
+                  query="3 projects"
+                  styles={{
+                    px: '2',
+                    py: '1',
+                    rounded: 'full',
+                    bg: 'white.200',
+                  }}
+                >
+                  {`Currently we support only ${maxDigests} update times limit, we will try to support more in the future.`}
+                </Highlight>
+              </Alert>
+            </Box>
+          ) : (
+            <span />
+          )}
           <Button
             colorScheme="blue"
-            disabled={isWorking}
+            isDisabled={shouldDisableDigestButton}
             isLoading={isWorking}
             leftIcon={<RepeatIcon />}
             loadingText={currentTask}
             onClick={handleButtonClick}
           >
-            Update
+            {`Update (${maxDigests - (data?.totalDigests ?? 0)} left)`}
           </Button>
         </Flex>
 

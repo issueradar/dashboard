@@ -160,8 +160,10 @@ export default function AppIndex() {
     onClose();
   };
 
-  const shouldDisableCreatingNewProject =
-    (projects?.length ?? 0) >= limits[session?.user.role ?? 'USER'].maxProjects;
+  const maxProjects = limits[session?.user.role ?? 'USER'].maxProjects;
+  const leftProjects = maxProjects - (projects?.length ?? 0);
+
+  const shouldDisableCreatingNewProject = leftProjects <= 0;
 
   const shouldDisableConfirmButton =
     !state.repoUrl ||
@@ -181,7 +183,7 @@ export default function AppIndex() {
           >
             {shouldDisableCreatingNewProject ? (
               <Box>
-                <Alert status="error">
+                <Alert status="error" maxHeight="40px" fontSize="sm">
                   <AlertIcon />
                   <Highlight
                     query="3 projects"
@@ -206,7 +208,7 @@ export default function AppIndex() {
               leftIcon={<AddIcon />}
               onClick={onOpen}
             >
-              New Project
+              {`New Project (${leftProjects} left)`}
             </Button>
           </Flex>
 

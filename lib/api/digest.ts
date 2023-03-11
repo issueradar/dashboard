@@ -75,8 +75,11 @@ export async function getDigest(
           },
         });
 
+    const totalDigests = await prisma.digest.count();
+
     return res.status(200).json({
       digests,
+      totalDigests,
       project,
     });
   } catch (error) {
