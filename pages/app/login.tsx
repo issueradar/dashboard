@@ -4,6 +4,7 @@ import { Button, Center, Container, Flex, Stack } from '@chakra-ui/react';
 import { CustomHead } from '@/components/app/CustomHead';
 import { GithubIcon } from '@/components/icons';
 import { Logo } from '@/components/Logo';
+import { currentHost, currentProtocol } from '@/lib/constants';
 
 export default function Login() {
   const [loading, setLoading] = useState(false);
@@ -19,7 +20,7 @@ export default function Login() {
         <Container centerContent>
           <Stack textAlign="center" spacing={20}>
             <Center>
-              <Logo width={180} />
+              <Logo width={180} href={`${currentProtocol}${currentHost}`} />
             </Center>
 
             <Button

@@ -1,5 +1,10 @@
 import { UserRole } from '@prisma/client';
 
+export const currentProtocol =
+  process.env.NODE_ENV === 'production' ? 'https://' : 'http://';
+export const currentHost =
+  process.env.NODE_ENV === 'production' ? 'issueradar.com' : 'localhost:3000';
+
 type Limit = {
   maxProjects: number;
   maxDigests: number;

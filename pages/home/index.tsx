@@ -7,11 +7,15 @@ import {
   Stack,
   Text,
 } from '@chakra-ui/react';
+import { ArrowForwardIcon } from '@chakra-ui/icons';
+import { useRouter } from 'next/router';
 import { CustomHead } from '@/components/app/CustomHead';
 import { Logo } from '@/components/Logo';
-import { ArrowForwardIcon } from '@chakra-ui/icons';
+import { currentProtocol, currentHost } from '@/lib/constants';
 
 export default function Home() {
+  const router = useRouter();
+
   return (
     <>
       <CustomHead
@@ -37,17 +41,15 @@ export default function Home() {
 
           <Center>
             <HStack spacing={5}>
-              <Button colorScheme="green" size="lg">
-                Request Early Access
-              </Button>
-
               <Button
                 colorScheme="green"
-                variant="outline"
-                size="sm"
+                size="lg"
                 rightIcon={<ArrowForwardIcon />}
+                onClick={() =>
+                  router.push(`${currentProtocol}app.${currentHost}/login`)
+                }
               >
-                Login
+                Take early access experience
               </Button>
             </HStack>
           </Center>

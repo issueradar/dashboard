@@ -35,11 +35,8 @@ import { ProjectCard } from '@/components/app/ProjectCard';
 import { fetcher } from '@/lib/fetcher';
 import { parseRepoUrl, initial as initialParsed } from '@/lib/url-parser';
 import { useToast } from '@/lib/hooks';
-import { limits } from '@/lib/constants';
+import { currentHost, limits } from '@/lib/constants';
 import { HttpMethod } from '@/types';
-
-const currentHost =
-  process.env.NODE_ENV === 'production' ? '.issueradar.com' : '.localhost:3000';
 
 const initialState = {
   isCreating: false,
@@ -108,7 +105,7 @@ export default function AppIndex() {
           dispatch({ value: { error: '' } });
         } else {
           dispatch({
-            value: { error: `${state.subdomain}${currentHost} is taken` },
+            value: { error: `${state.subdomain}.${currentHost} is taken` },
           });
         }
       }

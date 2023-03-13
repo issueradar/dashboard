@@ -5,14 +5,19 @@ import { Image } from '@/components/Image';
 export type LogoProps = {
   width?: number;
   height?: number;
+  href?: string;
 };
 
-export const Logo = ({ width = 120, height = (width * 5) / 12 }: LogoProps) => {
+export const Logo = ({
+  width = 120,
+  height = (width * 5) / 12,
+  href = '/',
+}: LogoProps) => {
   const { colorMode } = useColorMode();
 
   return (
     <Box width={width} height={height}>
-      <Link href="/" width="max-content">
+      <Link href={href} width="max-content">
         <Image
           priority={true}
           alt="IssueRadar"
