@@ -1,4 +1,3 @@
-import { useDebounce } from 'use-debounce';
 import { useRouter } from 'next/router';
 import { useState, useEffect, useRef } from 'react';
 import {
@@ -24,9 +23,10 @@ import {
   Textarea,
   useDisclosure,
   useToast,
-} from '@chakra-ui/react';
+} from '@/components';
 import useSWR, { mutate } from 'swr';
 import type { Project } from '@prisma/client';
+import { useDebounce } from 'react-use';
 
 import Layout from '@/components/app/Layout';
 import { fetcher } from '@/lib/fetcher';
@@ -139,33 +139,34 @@ export default function ProjectSettings() {
       setDeletingProject(false);
     }
   }
-  const [debouncedSubdomain] = useDebounce(data?.subdomain, 1500);
   const [subdomainError, setSubdomainError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function checkSubdomain() {
-      try {
-        const response = await fetch(
-          `/api/domain/check?domain=${debouncedSubdomain}&subdomain=1`,
-        );
+  useDebounce(
+    () => {
+      async function checkSubdomain() {
+        try {
+          const response = await fetch(
+            `/api/domain/check?domain=${data.subdomain}&subdomain=1`,
+          );
 
-        const available = await response.json();
+          const available = await response.json();
 
-        setSubdomainError(
-          available ? null : `${debouncedSubdomain}.vercel.pub`,
-        );
-      } catch (error) {
-        console.error(error);
+          setSubdomainError(available ? null : `${data.subdomain}.vercel.pub`);
+        } catch (error) {
+          console.error(error);
+        }
       }
-    }
 
-    if (
-      debouncedSubdomain !== settings?.subdomain &&
-      debouncedSubdomain &&
-      debouncedSubdomain?.length > 0
-    )
-      checkSubdomain();
-  }, [debouncedSubdomain, settings?.subdomain]);
+      if (
+        data.subdomain !== settings?.subdomain &&
+        data.subdomain &&
+        data.subdomain.length > 0
+      )
+        checkSubdomain();
+    },
+    200,
+    [data.subdomain],
+  );
 
   const shouldDisableConfirmButton = data.name !== confirmName;
 

@@ -1,4 +1,6 @@
 import {
+  Alert,
+  AlertIcon,
   Box,
   Button,
   Container,
@@ -7,9 +9,8 @@ import {
   Input,
   Stack,
   useToast,
-} from '@chakra-ui/react';
+} from '@/components';
 import Layout from '@/components/app/Layout';
-import BlurImage from '@/components/BlurImage';
 import { HttpMethod } from '@/types';
 
 import { useState, useEffect } from 'react';
@@ -56,18 +57,14 @@ export default function AppSettings() {
       <Layout>
         <Container>
           <Stack spacing={4}>
-            {data?.image && (
-              <BlurImage
-                src={data.image}
-                alt="Cover Photo"
-                width={100}
-                height={100}
-                className="rounded-md w-full"
-              />
-            )}
+            <Alert status="warning">
+              <AlertIcon />
+              We will allow changing Setting soon.
+            </Alert>
             <FormControl>
               <FormLabel>Full name</FormLabel>
               <Input
+                isDisabled
                 name="Your name"
                 placeholder="name"
                 value={data?.name || ''}
@@ -83,6 +80,7 @@ export default function AppSettings() {
             <FormControl>
               <FormLabel>Email</FormLabel>
               <Input
+                isDisabled
                 name="Email"
                 placeholder="email@example.com"
                 value={data?.email || ''}
@@ -98,6 +96,7 @@ export default function AppSettings() {
 
           <Box marginY={8}>
             <Button
+              isDisabled
               isLoading={saving}
               loadingText="Saving..."
               colorScheme="green"

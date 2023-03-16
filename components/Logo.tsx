@@ -1,6 +1,5 @@
 import { Box, useColorMode } from '@chakra-ui/react';
-import { Link } from '@/components/Link';
-import { Image } from '@/components/Image';
+import { NextLink, NextImage } from '@/components';
 
 export type LogoProps = {
   width?: number;
@@ -17,16 +16,16 @@ export const Logo = ({
 
   return (
     <Box width={width} height={height}>
-      <Link href={href} width="max-content">
-        <Image
-          priority={true}
+      <NextLink href={href} width="max-content">
+        <NextImage
+          priority
           alt="IssueRadar"
           objectFit="cover"
           src={`/logo-${colorMode}.png`}
           width={width}
           height={height}
         />
-      </Link>
+      </NextLink>
     </Box>
   );
 };

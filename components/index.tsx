@@ -1,2 +1,4 @@
-export * from './Image';
-export * from './Link';
+export * from '@chakra-ui/react';
+
+export * from './NextImage';
+export * from './NextLink';
