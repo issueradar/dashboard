@@ -1,10 +1,10 @@
 import cuid from 'cuid';
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
-import { authOptions } from 'pages/api/auth/[...nextauth]';
+import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 
-import type { Project } from '.prisma/client';
+import type { Project } from '@/types';
 import type { Session } from 'next-auth';
 import { placeholderBlurhash } from '../utils';
 

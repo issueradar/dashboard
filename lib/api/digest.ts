@@ -1,8 +1,7 @@
 import prisma from '@/lib/prisma';
 import { NextApiRequest, NextApiResponse } from 'next';
 import type { Session } from 'next-auth';
-import type { Digest, Project } from '.prisma/client';
-import type { WithProjectDigest } from '@/types';
+import type { Digest, Project, WithProjectDigest } from '@/types';
 
 interface AllDigests {
   digests: Digest[];

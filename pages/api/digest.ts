@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth/next';
 import { createDigest, deleteDigest, getDigest, updateDigest } from '@/lib/api';
 
-import { authOptions } from './auth/[...nextauth]';
+import { authOptions } from '@/lib/auth';
 import { HttpMethod } from '@/types';
 
 import type { NextApiRequest, NextApiResponse } from 'next';

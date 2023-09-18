@@ -1,12 +1,11 @@
 import prisma from '@/lib/prisma';
 
 import { NextApiRequest, NextApiResponse } from 'next';
-import type { Post, Project } from '.prisma/client';
 import type { Session } from 'next-auth';
 import { revalidate } from '@/lib/revalidate';
 import { getBlurDataURL, placeholderBlurhash } from '@/lib/utils';
 
-import type { WithProjectPost } from '@/types';
+import type { Post, Project, WithProjectPost } from '@/types';
 
 interface AllPosts {
   posts: Array<Post>;

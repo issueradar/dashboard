@@ -27,6 +27,7 @@ export default async function AnalyseWithGPT(
       messages: req.body,
     });
 
+
     res.status(response.status).json(response.data);
   } catch (error) {
     res.status(500).end(error);

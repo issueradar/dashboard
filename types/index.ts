@@ -1,3 +1,4 @@
+export * from '@prisma/client';
 export * from './common';
 export * from './http';
 export * from './icon';
