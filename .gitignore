@@ -4,5 +4,6 @@
 **.DS_Store
 **.vercel
 **.git
+tsconfig.tsbuildinfo
 .vercel
 fakeData.js
