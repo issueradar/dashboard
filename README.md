@@ -1,5 +1,7 @@
 # Issue Radar
 
+<img width="1708" alt="Screenshot 2023-09-19 at 11 21 53" src="https://github.com/issueradar/dashboard/assets/1083478/347b95ce-33a0-4812-af37-b969a3367cbb">
+
 ### Setup
 
 Make sure you have Docker installed and running.
