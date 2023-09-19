@@ -63,7 +63,12 @@ export default function Layout({ children, projectId }: LayoutProps) {
       <Flex direction="column" justifyContent="space-between" height="100vh">
         <Navbar user={session.user} />
 
-        <Box as="section" flex="1" px={{ base: '2', lg: '4' }}>
+        <Flex
+          direction="column"
+          as="section"
+          flex="1"
+          px={{ base: '2', lg: '4' }}
+        >
           <Container maxW="100vw" mt={2} py={{ base: '1', lg: '2' }}>
             <Skeleton isLoaded={!isLoading} width="max-content">
               <Text as="h1" fontSize="4xl" fontWeight="bold">
@@ -74,10 +79,10 @@ export default function Layout({ children, projectId }: LayoutProps) {
 
           {project && <ProjectNavbar project={project} />}
 
-          <Container maxW="100vw" paddingTop={4}>
+          <Box flex="1" height="100%">
             {children}
-          </Container>
-        </Box>
+          </Box>
+        </Flex>
 
         <Footer />
       </Flex>

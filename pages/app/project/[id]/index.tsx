@@ -8,6 +8,7 @@ import {
   Box,
   Button,
   Center,
+  Container,
   Flex,
   SkeletonText,
   Text,
@@ -150,50 +151,48 @@ export default function ProjectIndex() {
   return (
     <form onSubmit={handleSubmitWrapper}>
       <Layout projectId={projectId as string}>
-        <Flex justifyContent="space-between">
-          <Box
-            maxW={{ lg: '80%', md: '70%', sm: '50%' }}
-            height="100vh"
-            overflowY="auto"
-          >
-            <Box marginY={4} className="digest-markdown">
-              <ReactMarkdown>
-                {isThinking && lastResponse
-                  ? lastResponse.content
-                  : data?.digests?.content ?? ''}
-              </ReactMarkdown>
+        <Container flex="1" maxW="100vw" paddingY={8}>
+          <Flex justifyContent="space-between">
+            <Box maxW={{ lg: '80%', md: '70%', sm: '50%' }} height="100%">
+              <Box marginY={4} className="digest-markdown">
+                <ReactMarkdown>
+                  {isThinking && lastResponse
+                    ? lastResponse.content
+                    : data?.digests?.content ?? ''}
+                </ReactMarkdown>
+              </Box>
+
+              {!data?.digests?.content && (
+                <Center>
+                  <Text fontSize="sm" fontStyle="italic">
+                    Do not have any recent report. Click &quot;Generate&quot;
+                    button to generate one.
+                  </Text>
+                </Center>
+              )}
+
+              {(isThinking || isLoading) && (
+                <SkeletonText
+                  marginY={4}
+                  noOfLines={1}
+                  spacing="3"
+                  skeletonHeight="4"
+                  width="300px"
+                />
+              )}
             </Box>
 
-            {!data?.digests?.content && (
-              <Center>
-                <Text fontSize="sm" fontStyle="italic">
-                  Do not have any recent report. Click &quot;Generate&quot;
-                  button to generate one.
-                </Text>
-              </Center>
-            )}
-
-            {(isThinking || isLoading) && (
-              <SkeletonText
-                marginY={4}
-                noOfLines={1}
-                spacing="3"
-                skeletonHeight="4"
-                width="300px"
-              />
-            )}
-          </Box>
-
-          <Box>
-            <Button
-              type="submit"
-              colorScheme="blue"
-              isLoading={isThinking || isWorking}
-            >
-              {data?.digests ? 'Update' : 'Generate'}
-            </Button>
-          </Box>
-        </Flex>
+            <Box>
+              <Button
+                type="submit"
+                colorScheme="blue"
+                isLoading={isThinking || isWorking}
+              >
+                {data?.digests ? 'Update' : 'Generate'}
+              </Button>
+            </Box>
+          </Flex>
+        </Container>
       </Layout>
     </form>
   );
