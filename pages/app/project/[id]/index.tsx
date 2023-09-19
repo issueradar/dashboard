@@ -41,7 +41,6 @@ export default function ProjectIndex() {
   const [issues, setIssues] = useState<Issue[]>([]);
 
   const { messages, isLoading: isThinking, reload, setMessages } = useChat();
-  console.log('### isThinking: ', { isThinking });
 
   useEffect(() => {
     let unmount = false;
