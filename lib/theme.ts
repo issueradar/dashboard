@@ -19,19 +19,17 @@ const styles = {
       h2: {
         fontSize: '3xl',
         fontWeight: 'bold',
-        mb: '4',
+        marginTop: 8,
+        marginBottom: 4,
       },
       h3: {
         fontSize: 'xl',
         fontWeight: 'bold',
-        mt: '4',
-        mb: '2',
+        marginTop: 4,
+        marginBottom: 2,
       },
       ul: {
-        paddingLeft: '10',
-      },
-      p: {
-        mb: '4',
+        paddingLeft: 8,
       },
     },
   },
