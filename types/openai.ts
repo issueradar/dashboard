@@ -1,7 +1,9 @@
-export type { CreateChatCompletionResponse } from 'openai';
+export * from 'openai';
+export * from 'ai';
 
 export type Role = 'system' | 'assistant' | 'user';
-export type Message = {
-  role: Role;
-  content: string;
-};
+// export type Message = {
+//   id: string;
+//   role: Role;
+//   content: string;
+// };

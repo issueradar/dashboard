@@ -1,3 +1,11 @@
+import { customAlphabet } from 'nanoid';
+
+// 7-character random string
+export const nanoid = customAlphabet(
+  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
+  7,
+);
+
 export const capitalize = (s: string) => {
   if (typeof s !== 'string') return '';
   return s.charAt(0).toUpperCase() + s.slice(1);

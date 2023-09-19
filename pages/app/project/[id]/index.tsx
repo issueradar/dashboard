@@ -1,37 +1,22 @@
+import { useChat } from 'ai/react';
 import type { Project, Digest } from '@prisma/client';
 import ReactMarkdown from 'react-markdown';
-import { useSession } from 'next-auth/react';
 import useSWR, { mutate } from 'swr';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import {
-  Alert,
-  AlertIcon,
   Box,
   Button,
   Center,
   Flex,
-  Highlight,
   SkeletonText,
   Text,
-  useToast,
 } from '@chakra-ui/react';
-import { RepeatIcon } from '@chakra-ui/icons';
-import {
-  CreateChatCompletionResponse,
-  HttpMethod,
-  Issue,
-  Message,
-} from '@/types';
+import { HttpMethod, Issue, Message } from '@/types';
 import Layout from '@/components/app/Layout';
 import { fetcher } from '@/lib/fetcher';
 import { getIssues } from '@/lib/issue';
-import { limits } from '@/lib/constants';
-
-type DigestInput = {
-  content: string;
-  projectId: string;
-};
+import { nanoid } from '@/lib/utils';
 
 type ProjectDigestData = {
   digests: Digest;
@@ -41,13 +26,9 @@ type ProjectDigestData = {
 
 export default function ProjectIndex() {
   const [isWorking, setWorking] = useState(false);
-  const [currentTask, setCurrentTask] = useState('');
 
-  const toast = useToast();
   const router = useRouter();
   const { id: projectId } = router.query;
-
-  const { data: session } = useSession();
 
   const { data, isLoading } = useSWR<ProjectDigestData>(
     projectId && `/api/digest?projectId=${projectId}`,
@@ -57,188 +38,164 @@ export default function ProjectIndex() {
     },
   );
 
-  const askGPT = async (
-    messages: Message[],
-  ): Promise<CreateChatCompletionResponse | undefined> => {
-    try {
+  const [issues, setIssues] = useState<Issue[]>([]);
+
+  const { messages, isLoading: isThinking, reload, setMessages } = useChat();
+  console.log('### isThinking: ', { isThinking });
+
+  useEffect(() => {
+    let unmount = false;
+
+    const fetchData = async () => {
+      const issueData = [];
+
+      const repoUrl = data?.project?.repoUrl;
+
       setWorking(true);
-      setCurrentTask('Analyzing...');
 
-      const res = await fetch('/api/analyse', {
-        method: HttpMethod.POST,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(messages),
-      });
-
-      if (res.ok) {
-        const responseData = await res.json();
-        return responseData;
+      for (let page = 1; page <= 3; page++) {
+        await new Promise((r) => setTimeout(r, 500));
+        const newIssues: Issue[] = await getIssues({ repoUrl, page });
+        issueData.push(...newIssues);
       }
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
-  async function saveDigest({ content, projectId }: DigestInput) {
+      if (!unmount) {
+        setIssues(issueData);
+        setWorking(false);
+      }
+    };
+    if (!isThinking) {
+      fetchData();
+    }
+
+    return () => {
+      unmount = true;
+    };
+  }, [data, isThinking]);
+
+  const lastResponse = messages.slice(issues.length + 3)[0];
+
+  useEffect(() => {
+    let unmount = false;
+
+    const saveData = async () => {
+      if (lastResponse && !isThinking) {
+        const digestContent = lastResponse.content;
+
+        if (digestContent && projectId) {
+          setWorking(true);
+
+          const response = await fetch(`/api/digest?projectId=${projectId}`, {
+            method: HttpMethod.POST,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ content: digestContent }),
+          });
+
+          if (response.ok) {
+            mutate(`/api/digest?projectId=${projectId}`);
+          }
+
+          setWorking(false);
+        }
+      }
+    };
+    saveData();
+
+    return () => {
+      unmount = true;
+    };
+  }, [lastResponse, projectId, isThinking]);
+
+  async function handleSubmitWrapper(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
     setWorking(true);
 
-    try {
-      const response = await fetch(`/api/digest?projectId=${projectId}`, {
-        method: HttpMethod.POST,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ content }),
-      });
-
-      if (response.ok) {
-        mutate(`/api/digest?projectId=${projectId}`);
-        toast({
-          title: 'Digest saved successfully!',
-          status: 'success',
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Failed to save digest',
-        status: 'error',
-      });
-      console.error(error);
-    } finally {
-      setWorking(false);
-    }
-  }
-
-  async function handleButtonClick() {
-    setWorking(true);
-    const newData = [];
-
-    const repoUrl = data?.project?.repoUrl;
-
-    if (!repoUrl) {
-      throw new Error('Can not get repo URL');
-    }
-
-    setCurrentTask('Getting data...');
-
-    for (let page = 1; page <= 3; page++) {
-      await new Promise((r) => setTimeout(r, 500));
-      const newIssues: Issue[] = await getIssues({ repoUrl, page });
-      newData.push(...newIssues);
-    }
-
-    const messages: Message[] = [
+    const inputMessages: Message[] = [
       {
+        id: nanoid(),
         role: 'system',
         content:
           'You are a senior and helpful technical analyst. You will read a list of GitHub issue with format "#id Issue title"',
       },
-      ...newData.map<Message>((issue) => {
+      ...issues.map<Message>((issue) => {
         const content = `#${issue.number} ${issue.title}`;
         return {
+          id: `${issue.id}` ?? nanoid(),
           role: 'assistant',
           content,
         };
       }),
       {
+        id: nanoid(),
         role: 'user',
         content:
           'Group all the issue titles into categories, sort by the most repetitive issues first, and write the really short summary of each category in essay style',
       },
       {
+        id: nanoid(),
         role: 'user',
         content: 'Format the summary in markdown syntax',
       },
     ];
 
-    const res = await askGPT(messages);
+    setMessages(inputMessages);
 
-    if (res?.choices?.[0]) {
-      const digestContent = res.choices[0].message?.content;
+    reload();
 
-      if (digestContent && projectId) {
-        setCurrentTask('Saving...');
-
-        await saveDigest({
-          content: digestContent,
-          projectId: projectId as string,
-        });
-      }
-    }
     setWorking(false);
-    setCurrentTask('');
   }
 
-  const maxDigests = limits[session?.user.role ?? 'USER'].maxDigests;
-
-  const shouldDisableDigestButton = (data?.totalDigests ?? 0) >= maxDigests;
-
   return (
-    <Layout projectId={projectId as string}>
-      <Flex direction="column">
-        <Flex
-          marginBottom={4}
-          alignItems="center"
-          justifyContent="space-between"
-        >
-          {shouldDisableDigestButton ? (
-            <Box>
-              <Alert status="error">
-                <AlertIcon />
-                <Highlight
-                  query="3 projects"
-                  styles={{
-                    px: '2',
-                    py: '1',
-                    rounded: 'full',
-                    bg: 'white.200',
-                  }}
-                >
-                  {`Currently we support only ${maxDigests} update times limit, we will try to support more in the future.`}
-                </Highlight>
-              </Alert>
-            </Box>
-          ) : (
-            <span />
-          )}
-          <Button
-            colorScheme="blue"
-            isDisabled={shouldDisableDigestButton}
-            isLoading={isWorking}
-            leftIcon={<RepeatIcon />}
-            loadingText={currentTask}
-            onClick={handleButtonClick}
+    <form onSubmit={handleSubmitWrapper}>
+      <Layout projectId={projectId as string}>
+        <Flex justifyContent="space-between">
+          <Box
+            maxW={{ lg: '80%', md: '70%', sm: '50%' }}
+            height="100vh"
+            overflowY="auto"
           >
-            {`Update (${maxDigests - (data?.totalDigests ?? 0)} left)`}
-          </Button>
-        </Flex>
-
-        <Box maxW={{ base: '70%', lg: '50%' }}>
-          {(isLoading || isWorking) && (
-            <SkeletonText
-              marginY={4}
-              noOfLines={6}
-              spacing="3"
-              skeletonHeight="4"
-            />
-          )}
-
-          {data?.digests?.content && !isLoading ? (
             <Box marginY={4} className="digest-markdown">
-              <ReactMarkdown>{data.digests.content}</ReactMarkdown>
+              <ReactMarkdown>
+                {isThinking && lastResponse
+                  ? lastResponse.content
+                  : data?.digests?.content ?? ''}
+              </ReactMarkdown>
             </Box>
-          ) : (
-            <Center>
-              <Text fontSize="sm" fontStyle="italic">
-                Do not have any recent report. Click &quot;Update&quot; button
-                to get it.
-              </Text>
-            </Center>
-          )}
-        </Box>
-      </Flex>
-    </Layout>
+
+            {!data?.digests?.content && (
+              <Center>
+                <Text fontSize="sm" fontStyle="italic">
+                  Do not have any recent report. Click &quot;Generate&quot;
+                  button to generate one.
+                </Text>
+              </Center>
+            )}
+
+            {(isThinking || isLoading) && (
+              <SkeletonText
+                marginY={4}
+                noOfLines={1}
+                spacing="3"
+                skeletonHeight="4"
+                width="300px"
+              />
+            )}
+          </Box>
+
+          <Box>
+            <Button
+              type="submit"
+              colorScheme="blue"
+              isLoading={isThinking || isWorking}
+            >
+              {data?.digests ? 'Update' : 'Generate'}
+            </Button>
+          </Box>
+        </Flex>
+      </Layout>
+    </form>
   );
 }

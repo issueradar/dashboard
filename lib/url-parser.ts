@@ -39,6 +39,7 @@ export const repoUrlParser = (input = ''): ParserResult => {
       provider: 'GITHUB',
     };
   } else if (link.search('gitlab.com') !== -1) {
+    // TODO: Still has problems with gitlab.com
     const cleaned = link.replace('git@gitlab.com:', '');
 
     const splitted = cleaned.split('/');

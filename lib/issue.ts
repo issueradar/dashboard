@@ -5,11 +5,9 @@ const providerServer = (provider: Provider) => {
   switch (provider) {
     case 'GITHUB':
       return 'https://api.github.com';
-    case 'GITLAB':
-      return 'http://gitlab.com/api/v4';
     case 'UNKNOWN':
     default:
-      throw new Error('Currently supports GitHub and GitLab only');
+      throw new Error('Currently supports GitHub only');
   }
 };
 
@@ -21,8 +19,6 @@ const providerHeader = (provider: Provider): HeadersInit => {
         'Content-Type': 'application/json',
         // 'X-GitHub-Api-Version': '2022-11-28', // TODO: dont know why
       };
-    case 'GITLAB':
-      return {};
     case 'UNKNOWN':
     default:
       throw new Error('Currently supports GitHub and GitLab only');
@@ -30,7 +26,7 @@ const providerHeader = (provider: Provider): HeadersInit => {
 };
 
 type GetIssuesOptions = {
-  repoUrl: string;
+  repoUrl?: string | null;
   page?: number;
   state?: 'open' | 'closed' | 'all';
 };
@@ -41,6 +37,10 @@ export const getIssues = async ({
   state = 'all',
 }: GetIssuesOptions) => {
   try {
+    if (!repoUrl) {
+      return [];
+    }
+
     const { user, repo, provider } = parseRepoUrl(repoUrl);
     const server = providerServer(provider);
 
