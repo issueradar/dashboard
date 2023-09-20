@@ -11,11 +11,9 @@ import {
   Button,
   Flex,
   FormControl,
-  FormErrorMessage,
   FormLabel,
   Input,
   InputGroup,
-  InputRightAddon,
   InputRightElement,
   Modal,
   ModalBody,
@@ -25,9 +23,9 @@ import {
   ModalHeader,
   ModalOverlay,
   SimpleGrid,
-  Spinner,
   useDisclosure,
   Highlight,
+  Stack,
 } from '@chakra-ui/react';
 import { CheckIcon, AddIcon, WarningTwoIcon } from '@chakra-ui/icons';
 import Layout from '@/components/app/Layout';
@@ -35,15 +33,12 @@ import { ProjectCard } from '@/components/app/ProjectCard';
 import { fetcher } from '@/lib/fetcher';
 import { parseRepoUrl, initial as initialParsed } from '@/lib/url-parser';
 import { useToast } from '@/lib/hooks';
-import { currentHost, limits } from '@/lib/constants';
+import { limits } from '@/lib/constants';
 import { HttpMethod } from '@/types';
 
 const initialState = {
   isCreating: false,
-  isCheckingSubdomain: false,
   isManuallyEdited: false,
-  customisedSubdomain: false,
-  subdomain: '',
   error: '',
   repoUrl: '',
   parsedRepo: initialParsed,
@@ -95,37 +90,19 @@ export default function AppIndex() {
 
       dispatch({ key: 'parsedRepo', value: { user, repo, provider } });
 
-      if (state.subdomain) {
-        const response = await fetch(
-          `/api/domain/check?domain=${state.subdomain}&subdomain=1`,
-        );
-
-        const available = await response.json();
-        if (available) {
-          dispatch({ value: { error: '' } });
-        } else {
-          dispatch({
-            value: { error: `${state.subdomain}.${currentHost} is taken` },
-          });
-        }
-      }
-
       if (!state.isManuallyEdited) {
         if (provider !== 'UNKNOWN') {
           dispatch({ key: 'projectName', value: `${user}/${repo}` });
         }
-
-        if (!state.error) {
-          dispatch({ value: { subdomain: user } });
-        }
       }
     },
     1000,
-    [state.repoUrl, state.isManuallyEdited, state.subdomain],
+    [state.repoUrl, state.isManuallyEdited],
   );
 
   async function handleCreateProject() {
     dispatch({ value: { isCreating: true } });
+
     const res = await fetch('/api/project', {
       method: HttpMethod.POST,
       headers: {
@@ -135,7 +112,6 @@ export default function AppIndex() {
         userId: sessionId,
         name: state.projectName,
         repoUrl: state.repoUrl,
-        subdomain: state.subdomain,
       }),
     });
 
@@ -165,7 +141,6 @@ export default function AppIndex() {
   const shouldDisableConfirmButton =
     !state.repoUrl ||
     !state.projectName ||
-    !state.subdomain ||
     !!state.error ||
     state.parsedRepo.provider === 'UNKNOWN';
 
@@ -308,43 +283,20 @@ export default function AppIndex() {
                 }}
               />
             </FormControl>
-
-            <FormControl mt={4} isInvalid={!!state.error}>
-              <FormLabel>Subdomain</FormLabel>
-              <InputGroup>
-                <Input
-                  placeholder="repo"
-                  value={state.subdomain}
-                  onChange={(e) => {
-                    dispatch({
-                      value: {
-                        isManuallyEdited: true,
-                        subdomain: e.target.value,
-                      },
-                    });
-                  }}
-                />
-                <InputRightAddon>{currentHost}</InputRightAddon>
-              </InputGroup>
-              {state.error && (
-                <FormErrorMessage>{state.error}</FormErrorMessage>
-              )}
-            </FormControl>
           </ModalBody>
 
           <ModalFooter>
-            {state.isCheckingSubdomain && <Spinner />}
-
-            <Button
-              isLoading={state.isCreating}
-              isDisabled={shouldDisableConfirmButton}
-              colorScheme="blue"
-              mr={3}
-              onClick={handleCreateProject}
-            >
-              Create
-            </Button>
-            <Button onClick={handleModalClose}>Cancel</Button>
+            <Stack direction="row">
+              <Button onClick={handleModalClose}>Cancel</Button>
+              <Button
+                isLoading={state.isCreating}
+                isDisabled={shouldDisableConfirmButton}
+                colorScheme="blue"
+                onClick={handleCreateProject}
+              >
+                Create
+              </Button>
+            </Stack>
           </ModalFooter>
         </ModalContent>
       </Modal>

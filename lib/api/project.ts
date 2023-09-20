@@ -87,21 +87,13 @@ export async function createProject(
 ): Promise<void | NextApiResponse<{
   projectId: string;
 }>> {
-  const { subdomain, userId, ...rest } = req.body;
-
-  const sub = subdomain.replace(/[^a-zA-Z0-9/-]+/g, '');
+  const { userId, ...rest } = req.body;
 
   try {
     const response = await prisma.project.create({
       data: {
-        subdomain: sub.length > 0 ? sub : cuid(),
-        logo: '/logo.png',
-        image: `/placeholder.png`,
-        imageBlurhash: placeholderBlurhash,
         user: {
-          connect: {
-            id: userId,
-          },
+          connect: { id: userId },
         },
         ...rest,
       },
